@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"sync"
 	"time"
 
 	"github.com/dinosaursrarr/hackney-bindicator/client"
@@ -42,6 +43,8 @@ func (h *CollectionHandler) Handle(w http.ResponseWriter, r *http.Request) {
 	g := new(errgroup.Group)
 	binTypes := make([]string, len(binIds))
 	binWorkflowIds := make([]string, len(binIds))
+	var schedulesStarted sync.Map
+	var schedules sync.Map
 	for i, binId := range binIds {
 		i := i
 		binId := binId
@@ -59,28 +62,16 @@ func (h *CollectionHandler) Handle(w http.ResponseWriter, r *http.Request) {
 				return err
 			}
 			binWorkflowIds[i] = workflowId
-			return nil
-		})
-	}
-	if err := g.Wait(); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	schedules := map[string][]time.Time{}
-	for _, workflowId := range binWorkflowIds {
-		schedules[workflowId] = []time.Time{}
-	}
-
-	g = new(errgroup.Group)
-	for workflowId, _ := range schedules {
-		workflowId := workflowId
-		g.Go(func() error {
+			// Fetch the schedule as soon as we see this ID, but only the first time.
+			if _, ok := schedulesStarted.Load(workflowId); ok {
+				return nil
+			}
+			schedulesStarted.Store(workflowId, true)
 			schedule, err := h.Client.GetWorkflowSchedule(workflowId, token)
 			if err != nil {
 				return err
 			}
-			schedules[workflowId] = schedule
+			schedules.Store(workflowId, schedule)
 			return nil
 		})
 	}
@@ -99,12 +90,17 @@ func (h *CollectionHandler) Handle(w http.ResponseWriter, r *http.Request) {
 	}
 	var bins []bin
 	for i, _ := range binIds {
-		if len(schedules[binWorkflowIds[i]]) == 0 {
+		s, ok := schedules.Load(binWorkflowIds[i])
+		if !ok {
+			continue
+		}
+		schedule := s.([]time.Time)
+		if len(schedule) == 0 {
 			continue
 		}
 		bins = append(bins, bin{
 			Name:           binTypes[i],
-			NextCollection: schedules[binWorkflowIds[i]][0],
+			NextCollection: schedule[0],
 		})
 	}
 

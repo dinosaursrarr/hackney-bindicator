@@ -429,6 +429,72 @@ func TestNextCollectionDateForEachBin(t *testing.T) {
 		}`)
 }
 
+func TestOnlyFetchEachUniqueWorkflowScheduleOnce(t *testing.T) {
+	startSvr := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprintf(w, StartPage)
+	}))
+	startUrl, _ := url.Parse(startSvr.URL)
+	fetchCount := 0
+	apiSvr := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if strings.Contains(r.URL.String(), PropertyId) {
+			fmt.Fprintf(w, BinIdJsonResponse)
+		}
+		if strings.Contains(r.URL.String(), BinId1) && strings.Contains(r.URL.String(), "/item/") {
+			fmt.Fprintf(w, Bin1TypeJsonResponse)
+		}
+		if strings.Contains(r.URL.String(), BinId2) && strings.Contains(r.URL.String(), "/item/") {
+			fmt.Fprintf(w, Bin2TypeJsonResponse)
+		}
+		if strings.Contains(r.URL.String(), WorkflowId1) && strings.Contains(r.URL.String(), "/workflow/") {
+			fetchCount += 1
+			assert.Less(t, fetchCount, 2)
+			fmt.Fprintf(w, Workflow1ScheduleJsonResponse)
+		}
+		b, _ := ioutil.ReadAll(r.Body)
+		body := string(b)
+		if strings.Contains(body, BinId1) && strings.Contains(r.URL.String(), "/query") {
+			fmt.Fprintf(w, Bin1WorkflowIdJsonResponse)
+		}
+		if strings.Contains(body, BinId2) && strings.Contains(r.URL.String(), "/query") {
+			// Return same workflow ID so it should only be fetched once
+			fmt.Fprintf(w, Bin1WorkflowIdJsonResponse)
+		}
+	}))
+	defer apiSvr.Close()
+	apiUrl, _ := url.Parse(apiSvr.URL)
+	r, _ := http.NewRequest(http.MethodGet, RequestUrl, nil)
+	w := httptest.NewRecorder()
+
+	vars := map[string]string{
+		"property_id": PropertyId,
+	}
+	r = mux.SetURLVars(r, vars)
+	httpClient := http.Client{}
+	london, _ := time.LoadLocation("Europe/London")
+	now := time.Date(2023, 12, 15, 3, 19, 46, 72, london)
+	clock := clockwork.NewFakeClockAt(now)
+	client := client.BinsClient{httpClient, clock, apiUrl, startUrl}
+	handler := handler.CollectionHandler{client}
+
+	handler.Handle(w, r)
+
+	assert.Equal(t, w.Code, http.StatusOK)
+	assert.JSONEq(t, w.Body.String(), `
+		{
+			"PropertyId": "property_id",
+			"Bins": [
+				{
+					"Name": "Garbage can",
+					"NextCollection": "2024-01-01T00:00:00Z"
+				},
+				{
+					"Name": "Dumpster",
+					"NextCollection": "2024-01-01T00:00:00Z"
+				}
+			]
+		}`)
+}
+
 func TestSkipBinWithNoNextCollection(t *testing.T) {
 	startSvr := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, StartPage)
