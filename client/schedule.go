@@ -6,14 +6,23 @@ import (
 	"io/ioutil"
 	"net/http"
 	"time"
+
+	"github.com/patrickmn/go-cache"
 )
 
 func (c BinsClient) GetWorkflowSchedule(workflowId, token string) ([]time.Time, error) {
+	target := c.ApiHost.JoinPath(workflowUrl, workflowId).String()
+
+	if c.Cache != nil {
+		if res, found := c.Cache.Get(target); found {
+			return res.([]time.Time), nil
+		}
+	}
+
 	london, err := time.LoadLocation("Europe/London")
 	if err != nil {
 		return []time.Time{}, err
 	}
-	target := c.ApiHost.JoinPath(workflowUrl, workflowId).String()
 	req, err := http.NewRequest(http.MethodGet, target, nil)
 	if err != nil {
 		return []time.Time{}, err
@@ -53,6 +62,10 @@ func (c BinsClient) GetWorkflowSchedule(workflowId, token string) ([]time.Time, 
 		}
 		date := time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, london)
 		schedule = append(schedule, date)
+	}
+
+	if c.Cache != nil {
+		c.Cache.Set(target, schedule, cache.DefaultExpiration)
 	}
 
 	return schedule, nil

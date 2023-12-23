@@ -6,10 +6,19 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+
+	"github.com/patrickmn/go-cache"
 )
 
 func (c BinsClient) GetBinType(binId, token string) (string, error) {
 	target := c.ApiHost.JoinPath(itemUrl, binId).String()
+
+	if c.Cache != nil {
+		if res, found := c.Cache.Get(target); found {
+			return res.(string), nil
+		}
+	}
+
 	req, err := http.NewRequest(http.MethodGet, target, nil)
 	if err != nil { // Don't think this can fail
 		return "", err
@@ -43,6 +52,9 @@ func (c BinsClient) GetBinType(binId, token string) (string, error) {
 	for _, attribute := range data.Item.Attributes {
 		if attribute.AttributeCode != "attributes_itemsSubtitle" {
 			continue
+		}
+		if c.Cache != nil {
+			c.Cache.Set(target, attribute.Value, cache.DefaultExpiration)
 		}
 		return attribute.Value, nil
 	}

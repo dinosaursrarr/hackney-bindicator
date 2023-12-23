@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -26,10 +27,18 @@ func (h *CollectionHandler) Handle(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if res, found := h.Cache.Get(r.URL.String()); found {
-		result := res.(string)
-		fmt.Fprintf(w, result)
+	buf := new(bytes.Buffer)
+	if err := r.Write(buf); err != nil {
+		http.Error(w, "Could not serialise request", http.StatusInternalServerError)
 		return
+	}
+	cacheKey := buf.String()
+	if h.Cache != nil {
+		if res, found := h.Cache.Get(cacheKey); found {
+			result := res.(string)
+			fmt.Fprintf(w, result)
+			return
+		}
 	}
 
 	token, err := h.Client.GetAccessToken()
@@ -118,6 +127,8 @@ func (h *CollectionHandler) Handle(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	res := string(resBytes)
-	h.Cache.Set(r.URL.String(), res, cache.DefaultExpiration)
+	if h.Cache != nil {
+		h.Cache.Set(cacheKey, res, cache.DefaultExpiration)
+	}
 	fmt.Fprintf(w, res)
 }

@@ -4,6 +4,7 @@ import (
 	"github.com/dinosaursrarr/hackney-bindicator/client"
 	"github.com/dinosaursrarr/hackney-bindicator/handler"
 
+	// "bytes"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -138,9 +139,8 @@ func TestNoPropertyId(t *testing.T) {
 	r = mux.SetURLVars(r, vars)
 	httpClient := http.Client{}
 	clock := clockwork.NewFakeClock()
-	client := client.BinsClient{httpClient, clock, &url.URL{}, &url.URL{}}
-	cache := cache.New(15*time.Minute, 30*time.Minute)
-	handler := handler.CollectionHandler{client, cache}
+	client := client.BinsClient{httpClient, clock, &url.URL{}, &url.URL{}, nil}
+	handler := handler.CollectionHandler{client, nil}
 
 	handler.Handle(w, r)
 
@@ -161,9 +161,8 @@ func TestCannotGetAccessToken(t *testing.T) {
 	r = mux.SetURLVars(r, vars)
 	httpClient := http.Client{}
 	clock := clockwork.NewFakeClock()
-	client := client.BinsClient{httpClient, clock, &url.URL{}, startUrl}
-	cache := cache.New(15*time.Minute, 30*time.Minute)
-	handler := handler.CollectionHandler{client, cache}
+	client := client.BinsClient{httpClient, clock, &url.URL{}, startUrl, nil}
+	handler := handler.CollectionHandler{client, nil}
 
 	handler.Handle(w, r)
 
@@ -189,9 +188,8 @@ func TestClientErrorGettingBinIds(t *testing.T) {
 	r = mux.SetURLVars(r, vars)
 	httpClient := http.Client{}
 	clock := clockwork.NewFakeClock()
-	client := client.BinsClient{httpClient, clock, apiUrl, startUrl}
-	cache := cache.New(15*time.Minute, 30*time.Minute)
-	handler := handler.CollectionHandler{client, cache}
+	client := client.BinsClient{httpClient, clock, apiUrl, startUrl, nil}
+	handler := handler.CollectionHandler{client, nil}
 
 	handler.Handle(w, r)
 
@@ -217,9 +215,8 @@ func TestServerErrorGettingBinIds(t *testing.T) {
 	r = mux.SetURLVars(r, vars)
 	httpClient := http.Client{}
 	clock := clockwork.NewFakeClock()
-	client := client.BinsClient{httpClient, clock, apiUrl, startUrl}
-	cache := cache.New(15*time.Minute, 30*time.Minute)
-	handler := handler.CollectionHandler{client, cache}
+	client := client.BinsClient{httpClient, clock, apiUrl, startUrl, nil}
+	handler := handler.CollectionHandler{client, nil}
 
 	handler.Handle(w, r)
 
@@ -261,9 +258,8 @@ func TestErrorGettingBinTypes(t *testing.T) {
 	r = mux.SetURLVars(r, vars)
 	httpClient := http.Client{}
 	clock := clockwork.NewFakeClock()
-	client := client.BinsClient{httpClient, clock, apiUrl, startUrl}
-	cache := cache.New(15*time.Minute, 30*time.Minute)
-	handler := handler.CollectionHandler{client, cache}
+	client := client.BinsClient{httpClient, clock, apiUrl, startUrl, nil}
+	handler := handler.CollectionHandler{client, nil}
 
 	handler.Handle(w, r)
 
@@ -305,9 +301,8 @@ func TestErrorGettingBinWorkflowIds(t *testing.T) {
 	r = mux.SetURLVars(r, vars)
 	httpClient := http.Client{}
 	clock := clockwork.NewFakeClock()
-	client := client.BinsClient{httpClient, clock, apiUrl, startUrl}
-	cache := cache.New(15*time.Minute, 30*time.Minute)
-	handler := handler.CollectionHandler{client, cache}
+	client := client.BinsClient{httpClient, clock, apiUrl, startUrl, nil}
+	handler := handler.CollectionHandler{client, nil}
 
 	handler.Handle(w, r)
 
@@ -355,9 +350,8 @@ func TestErrorGettingWorkflowSchedules(t *testing.T) {
 	r = mux.SetURLVars(r, vars)
 	httpClient := http.Client{}
 	clock := clockwork.NewFakeClock()
-	client := client.BinsClient{httpClient, clock, apiUrl, startUrl}
-	cache := cache.New(15*time.Minute, 30*time.Minute)
-	handler := handler.CollectionHandler{client, cache}
+	client := client.BinsClient{httpClient, clock, apiUrl, startUrl, nil}
+	handler := handler.CollectionHandler{client, nil}
 
 	handler.Handle(w, r)
 
@@ -407,9 +401,8 @@ func TestNextCollectionDateForEachBin(t *testing.T) {
 	london, _ := time.LoadLocation("Europe/London")
 	now := time.Date(2023, 12, 15, 3, 19, 46, 72, london)
 	clock := clockwork.NewFakeClockAt(now)
-	client := client.BinsClient{httpClient, clock, apiUrl, startUrl}
-	cache := cache.New(15*time.Minute, 30*time.Minute)
-	handler := handler.CollectionHandler{client, cache}
+	client := client.BinsClient{httpClient, clock, apiUrl, startUrl, nil}
+	handler := handler.CollectionHandler{client, nil}
 
 	handler.Handle(w, r)
 
@@ -473,9 +466,8 @@ func TestOnlyFetchEachUniqueWorkflowScheduleOnce(t *testing.T) {
 	london, _ := time.LoadLocation("Europe/London")
 	now := time.Date(2023, 12, 15, 3, 19, 46, 72, london)
 	clock := clockwork.NewFakeClockAt(now)
-	client := client.BinsClient{httpClient, clock, apiUrl, startUrl}
-	cache := cache.New(15*time.Minute, 30*time.Minute)
-	handler := handler.CollectionHandler{client, cache}
+	client := client.BinsClient{httpClient, clock, apiUrl, startUrl, nil}
+	handler := handler.CollectionHandler{client, nil}
 
 	handler.Handle(w, r)
 
@@ -551,9 +543,8 @@ func TestSkipBinWithNoNextCollection(t *testing.T) {
 	london, _ := time.LoadLocation("Europe/London")
 	now := time.Date(2023, 12, 15, 3, 19, 46, 72, london)
 	clock := clockwork.NewFakeClockAt(now)
-	client := client.BinsClient{httpClient, clock, apiUrl, startUrl}
-	cache := cache.New(15*time.Minute, 30*time.Minute)
-	handler := handler.CollectionHandler{client, cache}
+	client := client.BinsClient{httpClient, clock, apiUrl, startUrl, nil}
+	handler := handler.CollectionHandler{client, nil}
 
 	handler.Handle(w, r)
 
@@ -570,54 +561,137 @@ func TestSkipBinWithNoNextCollection(t *testing.T) {
 		}`)
 }
 
-func TestFetchSecondTimeFromCache(t *testing.T) {
+func TestFetchTwiceWithoutCache(t *testing.T) {
+	fetches := make(map[string]int)
 	startSvr := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		fetches[r.URL.String()] += 1
 		fmt.Fprintf(w, StartPage)
 	}))
 	startUrl, _ := url.Parse(startSvr.URL)
-	fetches := make(map[*http.Request]int)
 	apiSvr := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fetches[r] = fetches[r] + 1
 		if strings.Contains(r.URL.String(), PropertyId) {
+			fetches[r.URL.String()] += 1
 			fmt.Fprintf(w, BinIdJsonResponse)
 		}
 		if strings.Contains(r.URL.String(), BinId1) && strings.Contains(r.URL.String(), "/item/") {
+			fetches[r.URL.String()] += 1
 			fmt.Fprintf(w, Bin1TypeJsonResponse)
 		}
 		if strings.Contains(r.URL.String(), BinId2) && strings.Contains(r.URL.String(), "/item/") {
+			fetches[r.URL.String()] += 1
 			fmt.Fprintf(w, Bin2TypeJsonResponse)
 		}
 		if strings.Contains(r.URL.String(), WorkflowId1) && strings.Contains(r.URL.String(), "/workflow/") {
+			fetches[r.URL.String()] += 1
 			fmt.Fprintf(w, Workflow1ScheduleJsonResponse)
+		}
+		if strings.Contains(r.URL.String(), WorkflowId2) && strings.Contains(r.URL.String(), "/workflow/") {
+			fetches[r.URL.String()] += 1
+			fmt.Fprintf(w, Workflow2ScheduleJsonResponse)
 		}
 		b, _ := ioutil.ReadAll(r.Body)
 		body := string(b)
 		if strings.Contains(body, BinId1) && strings.Contains(r.URL.String(), "/query") {
+			fetches[body] += 1
 			fmt.Fprintf(w, Bin1WorkflowIdJsonResponse)
 		}
 		if strings.Contains(body, BinId2) && strings.Contains(r.URL.String(), "/query") {
-			// Return same workflow ID so it should only be fetched once
-			fmt.Fprintf(w, Bin1WorkflowIdJsonResponse)
+			fetches[body] += 1
+			fmt.Fprintf(w, Bin2WorkflowIdJsonResponse)
 		}
 	}))
 	defer apiSvr.Close()
 	apiUrl, _ := url.Parse(apiSvr.URL)
-	r, _ := http.NewRequest(http.MethodGet, RequestUrl, nil)
-	w := httptest.NewRecorder()
+	r1, _ := http.NewRequest(http.MethodGet, RequestUrl, nil)
+	w1 := httptest.NewRecorder()
+	r2, _ := http.NewRequest(http.MethodGet, RequestUrl, nil)
+	w2 := httptest.NewRecorder()
 	vars := map[string]string{
 		"property_id": PropertyId,
 	}
-	r = mux.SetURLVars(r, vars)
+	r1 = mux.SetURLVars(r1, vars)
+	r2 = mux.SetURLVars(r2, vars)
 	httpClient := http.Client{}
 	london, _ := time.LoadLocation("Europe/London")
 	now := time.Date(2023, 12, 15, 3, 19, 46, 72, london)
 	clock := clockwork.NewFakeClockAt(now)
-	client := client.BinsClient{httpClient, clock, apiUrl, startUrl}
+	client := client.BinsClient{httpClient, clock, apiUrl, startUrl, nil}
+	handler := handler.CollectionHandler{client, nil}
+
+	handler.Handle(w1, r1)
+	handler.Handle(w2, r2)
+
+	assert.Equal(t, w1.Code, http.StatusOK)
+	assert.Equal(t, w2.Code, http.StatusOK)
+
+	for _, v := range fetches {
+		assert.Equal(t, v, 2)
+	}
+}
+
+func TestFetchOnceWithCache(t *testing.T) {
+	fetches := make(map[string]int)
+	startSvr := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		fetches[r.URL.String()] += 1
+		fmt.Fprintf(w, StartPage)
+	}))
+	startUrl, _ := url.Parse(startSvr.URL)
+	apiSvr := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if strings.Contains(r.URL.String(), PropertyId) {
+			fetches[r.URL.String()] += 1
+			fmt.Fprintf(w, BinIdJsonResponse)
+		}
+		if strings.Contains(r.URL.String(), BinId1) && strings.Contains(r.URL.String(), "/item/") {
+			fetches[r.URL.String()] += 1
+			fmt.Fprintf(w, Bin1TypeJsonResponse)
+		}
+		if strings.Contains(r.URL.String(), BinId2) && strings.Contains(r.URL.String(), "/item/") {
+			fetches[r.URL.String()] += 1
+			fmt.Fprintf(w, Bin2TypeJsonResponse)
+		}
+		if strings.Contains(r.URL.String(), WorkflowId1) && strings.Contains(r.URL.String(), "/workflow/") {
+			fetches[r.URL.String()] += 1
+			fmt.Fprintf(w, Workflow1ScheduleJsonResponse)
+		}
+		if strings.Contains(r.URL.String(), WorkflowId2) && strings.Contains(r.URL.String(), "/workflow/") {
+			fetches[r.URL.String()] += 1
+			fmt.Fprintf(w, Workflow2ScheduleJsonResponse)
+		}
+		b, _ := ioutil.ReadAll(r.Body)
+		body := string(b)
+		if strings.Contains(body, BinId1) && strings.Contains(r.URL.String(), "/query") {
+			fetches[body] += 1
+			fmt.Fprintf(w, Bin1WorkflowIdJsonResponse)
+		}
+		if strings.Contains(body, BinId2) && strings.Contains(r.URL.String(), "/query") {
+			fetches[body] += 1
+			fmt.Fprintf(w, Bin2WorkflowIdJsonResponse)
+		}
+	}))
+	defer apiSvr.Close()
+	apiUrl, _ := url.Parse(apiSvr.URL)
+	r1, _ := http.NewRequest(http.MethodGet, RequestUrl, nil)
+	w1 := httptest.NewRecorder()
+	r2, _ := http.NewRequest(http.MethodGet, RequestUrl, nil)
+	w2 := httptest.NewRecorder()
+	vars := map[string]string{
+		"property_id": PropertyId,
+	}
+	r1 = mux.SetURLVars(r1, vars)
+	r2 = mux.SetURLVars(r2, vars)
+	httpClient := http.Client{}
+	london, _ := time.LoadLocation("Europe/London")
+	now := time.Date(2023, 12, 15, 3, 19, 46, 72, london)
+	clock := clockwork.NewFakeClockAt(now)
+	client := client.BinsClient{httpClient, clock, apiUrl, startUrl, nil}
 	cache := cache.New(15*time.Minute, 30*time.Minute)
 	handler := handler.CollectionHandler{client, cache}
 
-	handler.Handle(w, r)
-	handler.Handle(w, r)
+	handler.Handle(w1, r1)
+	handler.Handle(w2, r2)
+
+	assert.Equal(t, w1.Code, http.StatusOK)
+	assert.Equal(t, w2.Code, http.StatusOK)
 
 	for _, v := range fetches {
 		assert.Equal(t, v, 1)

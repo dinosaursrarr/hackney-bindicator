@@ -9,14 +9,16 @@ import (
 	"net/url"
 	"testing"
 	"testing/iotest"
+	"time"
 
 	"github.com/dinosaursrarr/hackney-bindicator/client"
+	"github.com/patrickmn/go-cache"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestBadBinTypeUrl(t *testing.T) {
 	badUrl, _ := url.Parse("ftp://foo.bar")
-	client := client.BinsClient{http.Client{}, nil, badUrl, nil}
+	client := client.BinsClient{http.Client{}, nil, badUrl, nil, nil}
 
 	res, err := client.GetBinType(BinId, Token)
 
@@ -30,7 +32,7 @@ func TestSetAccessTokenGettingBinType(t *testing.T) {
 	}))
 	defer apiSvr.Close()
 	apiUrl, _ := url.Parse(apiSvr.URL)
-	client := client.BinsClient{http.Client{}, nil, apiUrl, nil}
+	client := client.BinsClient{http.Client{}, nil, apiUrl, nil, nil}
 
 	client.GetBinType(BinId, Token)
 }
@@ -46,7 +48,7 @@ func TestHttpErrorGettingBinType(t *testing.T) {
 			},
 		},
 	}
-	client := client.BinsClient{httpClient, nil, apiUrl, nil}
+	client := client.BinsClient{httpClient, nil, apiUrl, nil, nil}
 
 	res, err := client.GetBinType(BinId, Token)
 
@@ -60,7 +62,7 @@ func TestBadStatusCodeGettingBinType(t *testing.T) {
 	}))
 	defer apiSvr.Close()
 	apiUrl, _ := url.Parse(apiSvr.URL)
-	client := client.BinsClient{http.Client{}, nil, apiUrl, nil}
+	client := client.BinsClient{http.Client{}, nil, apiUrl, nil, nil}
 
 	res, err := client.GetBinType(BinId, Token)
 
@@ -82,7 +84,7 @@ func TestErrorReadingBinType(t *testing.T) {
 			},
 		},
 	}
-	client := client.BinsClient{httpClient, nil, apiUrl, nil}
+	client := client.BinsClient{httpClient, nil, apiUrl, nil, nil}
 
 	res, err := client.GetBinType(BinId, Token)
 
@@ -94,7 +96,7 @@ func TestBinTypeNotFound(t *testing.T) {
 	apiSvr := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
 	defer apiSvr.Close()
 	apiUrl, _ := url.Parse(apiSvr.URL)
-	client := client.BinsClient{http.Client{}, nil, apiUrl, nil}
+	client := client.BinsClient{http.Client{}, nil, apiUrl, nil, nil}
 
 	res, err := client.GetBinType(BinId, Token)
 
@@ -119,7 +121,7 @@ func TestEmptyBinTypeFound(t *testing.T) {
 	}))
 	defer apiSvr.Close()
 	apiUrl, _ := url.Parse(apiSvr.URL)
-	client := client.BinsClient{http.Client{}, nil, apiUrl, nil}
+	client := client.BinsClient{http.Client{}, nil, apiUrl, nil, nil}
 
 	res, err := client.GetBinType(BinId, Token)
 
@@ -144,10 +146,65 @@ func TestSuccessBinType(t *testing.T) {
 	}))
 	defer apiSvr.Close()
 	apiUrl, _ := url.Parse(apiSvr.URL)
-	client := client.BinsClient{http.Client{}, nil, apiUrl, nil}
+	client := client.BinsClient{http.Client{}, nil, apiUrl, nil, nil}
 
 	res, err := client.GetBinType(BinId, Token)
 
 	assert.Equal(t, res, "Garbage sack")
 	assert.Nil(t, err)
+}
+
+func TestFetchBinTypeTwiceWithoutCache(t *testing.T) {
+	fetches := 0
+	apiSvr := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprintf(w, `
+			{
+				"item": {
+					"attributes": [
+						{
+							"attributeCode": "attributes_itemsSubtitle",
+							"value": "Garbage sack"
+						}
+					]
+				}
+			}
+		`)
+		fetches += 1
+	}))
+	defer apiSvr.Close()
+	apiUrl, _ := url.Parse(apiSvr.URL)
+	client := client.BinsClient{http.Client{}, nil, apiUrl, nil, nil}
+
+	client.GetBinType(BinId, Token)
+	client.GetBinType(BinId, Token)
+
+	assert.Equal(t, fetches, 2)
+}
+
+func TestFetchBinTypeOnceWithCache(t *testing.T) {
+	fetches := 0
+	apiSvr := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprintf(w, `
+			{
+				"item": {
+					"attributes": [
+						{
+							"attributeCode": "attributes_itemsSubtitle",
+							"value": "Garbage sack"
+						}
+					]
+				}
+			}
+		`)
+		fetches += 1
+	}))
+	defer apiSvr.Close()
+	apiUrl, _ := url.Parse(apiSvr.URL)
+	cache := cache.New(15*time.Minute, 30*time.Minute)
+	client := client.BinsClient{http.Client{}, nil, apiUrl, nil, cache}
+
+	client.GetBinType(BinId, Token)
+	client.GetBinType(BinId, Token)
+
+	assert.Equal(t, fetches, 1)
 }

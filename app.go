@@ -29,14 +29,14 @@ func main() {
 
 	}
 
+	// Default expiry time of 15 mins, purge expired items after 30 mins
+	cache := cache.New(15*time.Minute, 30*time.Minute)
+
 	httpClient := http.Client{}
 	clock := clockwork.NewRealClock()
 	apiHost, _ := url.Parse("https://api.uk.alloyapp.io")
 	startUrl, _ := url.Parse("https://hackney-waste-pages.azurewebsites.net")
-	binsClient := client.BinsClient{httpClient, clock, apiHost, startUrl}
-
-	// Default expiry time of 15 mins, purge expired items after 30 mins
-	cache := cache.New(15*time.Minute, 30*time.Minute)
+	binsClient := client.BinsClient{httpClient, clock, apiHost, startUrl, cache}
 
 	handler := handler.CollectionHandler{binsClient, cache}
 

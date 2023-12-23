@@ -8,9 +8,16 @@ import (
 	"strings"
 
 	"github.com/anaskhan96/soup"
+	"github.com/patrickmn/go-cache"
 )
 
 func (c BinsClient) GetAccessToken() (string, error) {
+	if c.Cache != nil {
+		if res, found := c.Cache.Get(c.StartUrl.String()); found {
+			return res.(string), nil
+		}
+	}
+
 	req, err := http.NewRequest(http.MethodGet, c.StartUrl.String(), nil)
 	if err != nil {
 		return "", err
@@ -36,7 +43,11 @@ func (c BinsClient) GetAccessToken() (string, error) {
 		}
 		start := strings.Index(t[prefix:], "\"") + prefix + 1
 		end := strings.Index(t[start:], "\"") + start
-		return t[start:end], nil
+		token := t[start:end]
+		if c.Cache != nil {
+			c.Cache.Set(c.StartUrl.String(), token, cache.DefaultExpiration)
+		}
+		return token, nil
 	}
 
 	return "", errors.New("Could not find access token in response")

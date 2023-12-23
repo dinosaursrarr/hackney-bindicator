@@ -11,16 +11,15 @@ import (
 	"testing/iotest"
 	"time"
 
-	_ "time/tzdata"
-
 	"github.com/dinosaursrarr/hackney-bindicator/client"
 	"github.com/jonboulle/clockwork"
+	"github.com/patrickmn/go-cache"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestBadWorkflowScheduleUrl(t *testing.T) {
 	badUrl, _ := url.Parse("ftp://foo.bar")
-	client := client.BinsClient{http.Client{}, nil, badUrl, nil}
+	client := client.BinsClient{http.Client{}, nil, badUrl, nil, nil}
 
 	res, err := client.GetWorkflowSchedule(WorkflowId, Token)
 
@@ -35,7 +34,7 @@ func TestSetAccessTokenGettingWorkflowSchedule(t *testing.T) {
 	defer apiSvr.Close()
 	apiUrl, _ := url.Parse(apiSvr.URL)
 	clock := clockwork.NewFakeClock()
-	client := client.BinsClient{http.Client{}, clock, apiUrl, nil}
+	client := client.BinsClient{http.Client{}, clock, apiUrl, nil, nil}
 
 	client.GetWorkflowSchedule(WorkflowId, Token)
 }
@@ -51,7 +50,7 @@ func TestHttpErrorGettingWorkflowSchedule(t *testing.T) {
 			},
 		},
 	}
-	client := client.BinsClient{httpClient, nil, apiUrl, nil}
+	client := client.BinsClient{httpClient, nil, apiUrl, nil, nil}
 
 	res, err := client.GetWorkflowSchedule(WorkflowId, Token)
 
@@ -65,7 +64,7 @@ func TestBadStatusCodeGettingWorkflowSchedule(t *testing.T) {
 	}))
 	defer apiSvr.Close()
 	apiUrl, _ := url.Parse(apiSvr.URL)
-	client := client.BinsClient{http.Client{}, nil, apiUrl, nil}
+	client := client.BinsClient{http.Client{}, nil, apiUrl, nil, nil}
 
 	res, err := client.GetWorkflowSchedule(WorkflowId, Token)
 
@@ -87,7 +86,7 @@ func TestErrorReadingWorkflowSchedule(t *testing.T) {
 			},
 		},
 	}
-	client := client.BinsClient{httpClient, nil, apiUrl, nil}
+	client := client.BinsClient{httpClient, nil, apiUrl, nil, nil}
 
 	res, err := client.GetWorkflowSchedule(WorkflowId, Token)
 
@@ -100,7 +99,7 @@ func TestWorkflowScheduleNotFound(t *testing.T) {
 	defer apiSvr.Close()
 	apiUrl, _ := url.Parse(apiSvr.URL)
 	clock := clockwork.NewFakeClock()
-	client := client.BinsClient{http.Client{}, clock, apiUrl, nil}
+	client := client.BinsClient{http.Client{}, clock, apiUrl, nil, nil}
 
 	res, err := client.GetWorkflowSchedule(WorkflowId, Token)
 
@@ -126,7 +125,7 @@ func TestEmptyWorkflowScheduleFound(t *testing.T) {
 	defer apiSvr.Close()
 	apiUrl, _ := url.Parse(apiSvr.URL)
 	clock := clockwork.NewFakeClock()
-	client := client.BinsClient{http.Client{}, clock, apiUrl, nil}
+	client := client.BinsClient{http.Client{}, clock, apiUrl, nil, nil}
 
 	res, err := client.GetWorkflowSchedule(WorkflowId, Token)
 
@@ -157,7 +156,7 @@ func TestSuccessWorkflowSchedule(t *testing.T) {
 	london, _ := time.LoadLocation("Europe/London")
 	now := time.Date(2023, 12, 15, 3, 19, 46, 72, london)
 	clock := clockwork.NewFakeClockAt(now)
-	client := client.BinsClient{http.Client{}, clock, apiUrl, nil}
+	client := client.BinsClient{http.Client{}, clock, apiUrl, nil, nil}
 
 	res, err := client.GetWorkflowSchedule(BinId, Token)
 
@@ -191,7 +190,7 @@ func TestFilterWorkflowsInPast(t *testing.T) {
 	london, _ := time.LoadLocation("Europe/London")
 	now := time.Date(2024, 1, 1, 3, 19, 46, 72, london)
 	clock := clockwork.NewFakeClockAt(now)
-	client := client.BinsClient{http.Client{}, clock, apiUrl, nil}
+	client := client.BinsClient{http.Client{}, clock, apiUrl, nil, nil}
 
 	res, err := client.GetWorkflowSchedule(BinId, Token)
 
@@ -199,4 +198,67 @@ func TestFilterWorkflowsInPast(t *testing.T) {
 	c := time.Date(2025, 7, 6, 0, 0, 0, 0, london)
 	assert.Equal(t, []time.Time{b, c}, res)
 	assert.Nil(t, err)
+}
+
+func TestFetchScheduleTwiceWithoutCache(t *testing.T) {
+	fetches := 0
+	apiSvr := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprintf(w, `
+			{
+				"workflow": {
+					"workflow": {
+						"trigger": {
+							"dates": [
+								"2023-12-22T13:55:42.123Z"
+							]
+						}
+					}
+				}
+			}
+		`)
+		fetches += 1
+	}))
+	defer apiSvr.Close()
+	apiUrl, _ := url.Parse(apiSvr.URL)
+	london, _ := time.LoadLocation("Europe/London")
+	now := time.Date(2023, 12, 15, 3, 19, 46, 72, london)
+	clock := clockwork.NewFakeClockAt(now)
+	client := client.BinsClient{http.Client{}, clock, apiUrl, nil, nil}
+
+	client.GetWorkflowSchedule(BinId, Token)
+	client.GetWorkflowSchedule(BinId, Token)
+
+	assert.Equal(t, fetches, 2)
+}
+
+func TestFetchScheduleOnceWithCache(t *testing.T) {
+	fetches := 0
+	apiSvr := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprintf(w, `
+			{
+				"workflow": {
+					"workflow": {
+						"trigger": {
+							"dates": [
+								"2023-12-22T13:55:42.123Z"
+							]
+						}
+					}
+				}
+			}
+		`)
+		fetches += 1
+	}))
+	defer apiSvr.Close()
+	apiUrl, _ := url.Parse(apiSvr.URL)
+	london, _ := time.LoadLocation("Europe/London")
+	now := time.Date(2023, 12, 15, 3, 19, 46, 72, london)
+	clock := clockwork.NewFakeClockAt(now)
+	cache := cache.New(15*time.Minute, 30*time.Minute)
+	client := client.BinsClient{http.Client{}, clock, apiUrl, nil, cache}
+
+	client.GetWorkflowSchedule(BinId, Token)
+	client.GetWorkflowSchedule(BinId, Token)
+
+	assert.Equal(t, fetches, 1)
 }

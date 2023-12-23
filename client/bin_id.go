@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+
+	"github.com/patrickmn/go-cache"
 )
 
 // Want to be able to distinguish this error from other statuses.
@@ -13,6 +15,13 @@ var ErrBadPropertyId = errors.New("Status code 400 fetching list of bins")
 
 func (c BinsClient) GetBinIds(propertyId, token string) ([]string, error) {
 	target := c.ApiHost.JoinPath(itemUrl, propertyId).String()
+
+	if c.Cache != nil {
+		if res, found := c.Cache.Get(target); found {
+			return res.([]string), nil
+		}
+	}
+
 	req, err := http.NewRequest(http.MethodGet, target, nil)
 	if err != nil {
 		return []string{}, err
@@ -50,6 +59,9 @@ func (c BinsClient) GetBinIds(propertyId, token string) ([]string, error) {
 	for _, attribute := range data.Item.Attributes {
 		if attribute.AttributeCode != "attributes_wasteContainersAssignableWasteContainers" {
 			continue
+		}
+		if c.Cache != nil {
+			c.Cache.Set(target, attribute.Value, cache.DefaultExpiration)
 		}
 		return attribute.Value, nil
 	}

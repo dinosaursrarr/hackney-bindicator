@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+
+	"github.com/patrickmn/go-cache"
 )
 
 func (c BinsClient) GetBinWorkflowId(binId, token string) (string, error) {
@@ -44,8 +46,16 @@ func (c BinsClient) GetBinWorkflowId(binId, token string) (string, error) {
             ],
         },
     }`)
-	target := c.ApiHost.JoinPath(queryUrl).String()
-	req, err := http.NewRequest(http.MethodPost, target, bytes.NewBuffer(reqBody))
+	target := c.ApiHost.JoinPath(queryUrl)
+
+	cacheKey := target.JoinPath(binId).String()
+	if c.Cache != nil {
+		if res, found := c.Cache.Get(cacheKey); found {
+			return res.(string), nil
+		}
+	}
+
+	req, err := http.NewRequest(http.MethodPost, target.String(), bytes.NewBuffer(reqBody))
 	if err != nil {
 		return "", err
 	}
@@ -80,6 +90,11 @@ func (c BinsClient) GetBinWorkflowId(binId, token string) (string, error) {
 			if attribute.AttributeCode != "attributes_scheduleCodeWorkflowID_5f8dbfdce27d98006789b4ec" {
 				continue
 			}
+
+			if c.Cache != nil {
+				c.Cache.Set(cacheKey, attribute.Value, cache.DefaultExpiration)
+			}
+
 			return attribute.Value, nil
 		}
 	}

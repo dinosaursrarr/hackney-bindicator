@@ -9,8 +9,10 @@ import (
 	"net/url"
 	"testing"
 	"testing/iotest"
+	"time"
 
 	"github.com/dinosaursrarr/hackney-bindicator/client"
+	"github.com/patrickmn/go-cache"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -20,7 +22,7 @@ func TestSuccessAccessToken(t *testing.T) {
 	}))
 	defer svr.Close()
 	startUrl, _ := url.Parse(svr.URL)
-	client := client.BinsClient{http.Client{}, nil, nil, startUrl}
+	client := client.BinsClient{http.Client{}, nil, nil, startUrl, nil}
 
 	res, err := client.GetAccessToken()
 
@@ -28,9 +30,42 @@ func TestSuccessAccessToken(t *testing.T) {
 	assert.Nil(t, err)
 }
 
+func TestFetchAccessTokenTwiceWithoutCache(t *testing.T) {
+	fetches := 0
+	svr := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprintf(w, "<script>ALLOY_APP_TOKEN: \"foo\"</script>")
+		fetches += 1
+	}))
+	defer svr.Close()
+	startUrl, _ := url.Parse(svr.URL)
+	client := client.BinsClient{http.Client{}, nil, nil, startUrl, nil}
+
+	client.GetAccessToken()
+	client.GetAccessToken()
+
+	assert.Equal(t, fetches, 2)
+}
+
+func TestFetchAccessTokenOnceWithCache(t *testing.T) {
+	fetches := 0
+	svr := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprintf(w, "<script>ALLOY_APP_TOKEN: \"foo\"</script>")
+		fetches += 1
+	}))
+	defer svr.Close()
+	startUrl, _ := url.Parse(svr.URL)
+	cache := cache.New(15*time.Minute, 30*time.Minute)
+	client := client.BinsClient{http.Client{}, nil, nil, startUrl, cache}
+
+	client.GetAccessToken()
+	client.GetAccessToken()
+
+	assert.Equal(t, fetches, 1)
+}
+
 func TestBadUrlForAccessToken(t *testing.T) {
 	badUrl, _ := url.Parse("ftp://foo.com")
-	client := client.BinsClient{http.Client{}, nil, nil, badUrl}
+	client := client.BinsClient{http.Client{}, nil, nil, badUrl, nil}
 
 	res, err := client.GetAccessToken()
 
@@ -51,7 +86,7 @@ func TestHttpErrorGettingAccessToken(t *testing.T) {
 			},
 		},
 	}
-	client := client.BinsClient{httpClient, nil, nil, startUrl}
+	client := client.BinsClient{httpClient, nil, nil, startUrl, nil}
 
 	res, err := client.GetAccessToken()
 
@@ -65,7 +100,7 @@ func TestBadStatusCodeGettingAccessToken(t *testing.T) {
 	}))
 	defer svr.Close()
 	startUrl, _ := url.Parse(svr.URL)
-	client := client.BinsClient{http.Client{}, nil, nil, startUrl}
+	client := client.BinsClient{http.Client{}, nil, nil, startUrl, nil}
 
 	res, err := client.GetAccessToken()
 
@@ -87,7 +122,7 @@ func TestErrorReadingGettingAccessToken(t *testing.T) {
 			},
 		},
 	}
-	client := client.BinsClient{httpClient, nil, nil, startUrl}
+	client := client.BinsClient{httpClient, nil, nil, startUrl, nil}
 
 	res, err := client.GetAccessToken()
 
@@ -101,7 +136,7 @@ func TestCannotFindAccessToken(t *testing.T) {
 	}))
 	defer svr.Close()
 	startUrl, _ := url.Parse(svr.URL)
-	client := client.BinsClient{http.Client{}, nil, nil, startUrl}
+	client := client.BinsClient{http.Client{}, nil, nil, startUrl, nil}
 
 	res, err := client.GetAccessToken()
 

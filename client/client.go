@@ -5,6 +5,7 @@ import (
 	"net/url"
 
 	"github.com/jonboulle/clockwork"
+	"github.com/patrickmn/go-cache"
 )
 
 const itemUrl = "/api/item/"
@@ -16,4 +17,5 @@ type BinsClient struct {
 	Clock      clockwork.Clock
 	ApiHost    *url.URL
 	StartUrl   *url.URL
+	Cache      *cache.Cache
 }
