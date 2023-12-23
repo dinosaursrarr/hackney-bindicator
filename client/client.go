@@ -12,7 +12,7 @@ const queryUrl = "/api/aqs/query"
 const workflowUrl = "/api/workflow/"
 
 type BinsClient struct {
-    HttpClient http.Client
+	HttpClient http.Client
 	Clock      clockwork.Clock
 	ApiHost    *url.URL
 	StartUrl   *url.URL
