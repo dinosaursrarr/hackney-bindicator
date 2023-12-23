@@ -14,8 +14,8 @@ import (
 	_ "time/tzdata"
 
 	"github.com/gorilla/mux"
+	"github.com/hashicorp/golang-lru/v2/expirable"
 	"github.com/jonboulle/clockwork"
-	"github.com/patrickmn/go-cache"
 )
 
 func helloHandler(w http.ResponseWriter, r *http.Request) {
@@ -29,8 +29,8 @@ func main() {
 
 	}
 
-	// Default expiry time of 15 mins, purge expired items after 30 mins
-	cache := cache.New(15*time.Minute, 30*time.Minute)
+	// Default expiry time of 15 mins, up to 4k cached entries
+	cache := expirable.NewLRU[string, interface{}](4096, nil, time.Minute*15)
 
 	httpClient := http.Client{}
 	clock := clockwork.NewRealClock()

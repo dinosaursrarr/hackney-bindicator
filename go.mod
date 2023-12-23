@@ -5,8 +5,8 @@ go 1.21.5
 require (
 	github.com/anaskhan96/soup v1.2.5
 	github.com/gorilla/mux v1.8.1
+	github.com/hashicorp/golang-lru/v2 v2.0.7
 	github.com/jonboulle/clockwork v0.4.0
-	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/stretchr/testify v1.8.4
 	golang.org/x/sync v0.5.0
 )

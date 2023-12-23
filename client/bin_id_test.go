@@ -12,7 +12,7 @@ import (
 	"time"
 
 	"github.com/dinosaursrarr/hackney-bindicator/client"
-	"github.com/patrickmn/go-cache"
+	"github.com/hashicorp/golang-lru/v2/expirable"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -32,8 +32,7 @@ func TestSetAccessTokenGettingBinIds(t *testing.T) {
 	}))
 	defer apiSvr.Close()
 	apiUrl, _ := url.Parse(apiSvr.URL)
-	cache := cache.New(15*time.Minute, 30*time.Minute)
-	client := client.BinsClient{http.Client{}, nil, apiUrl, nil, cache}
+	client := client.BinsClient{http.Client{}, nil, apiUrl, nil, nil}
 
 	client.GetBinIds(PropertyId, Token)
 }
@@ -49,8 +48,7 @@ func TestHttpErrorGettingBinIds(t *testing.T) {
 			},
 		},
 	}
-	cache := cache.New(15*time.Minute, 30*time.Minute)
-	client := client.BinsClient{httpClient, nil, apiUrl, nil, cache}
+	client := client.BinsClient{httpClient, nil, apiUrl, nil, nil}
 
 	res, err := client.GetBinIds(PropertyId, Token)
 
@@ -64,8 +62,7 @@ func TestStatusCode400GettingBinIds(t *testing.T) {
 	}))
 	defer apiSvr.Close()
 	apiUrl, _ := url.Parse(apiSvr.URL)
-	cache := cache.New(15*time.Minute, 30*time.Minute)
-	client := client.BinsClient{http.Client{}, nil, apiUrl, nil, cache}
+	client := client.BinsClient{http.Client{}, nil, apiUrl, nil, nil}
 
 	res, err := client.GetBinIds(PropertyId, Token)
 
@@ -79,8 +76,7 @@ func TestBadStatusCodeGettingBinIds(t *testing.T) {
 	}))
 	defer apiSvr.Close()
 	apiUrl, _ := url.Parse(apiSvr.URL)
-	cache := cache.New(15*time.Minute, 30*time.Minute)
-	client := client.BinsClient{http.Client{}, nil, apiUrl, nil, cache}
+	client := client.BinsClient{http.Client{}, nil, apiUrl, nil, nil}
 
 	res, err := client.GetBinIds(PropertyId, Token)
 
@@ -102,8 +98,7 @@ func TestErrorReadingBinIds(t *testing.T) {
 			},
 		},
 	}
-	cache := cache.New(15*time.Minute, 30*time.Minute)
-	client := client.BinsClient{httpClient, nil, apiUrl, nil, cache}
+	client := client.BinsClient{httpClient, nil, apiUrl, nil, nil}
 
 	res, err := client.GetBinIds(PropertyId, Token)
 
@@ -115,8 +110,7 @@ func TestBinIdsNotFound(t *testing.T) {
 	apiSvr := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
 	defer apiSvr.Close()
 	apiUrl, _ := url.Parse(apiSvr.URL)
-	cache := cache.New(15*time.Minute, 30*time.Minute)
-	client := client.BinsClient{http.Client{}, nil, apiUrl, nil, cache}
+	client := client.BinsClient{http.Client{}, nil, apiUrl, nil, nil}
 
 	res, err := client.GetBinIds(PropertyId, Token)
 
@@ -141,8 +135,7 @@ func TestNoBinIdsFound(t *testing.T) {
 	}))
 	defer apiSvr.Close()
 	apiUrl, _ := url.Parse(apiSvr.URL)
-	cache := cache.New(15*time.Minute, 30*time.Minute)
-	client := client.BinsClient{http.Client{}, nil, apiUrl, nil, cache}
+	client := client.BinsClient{http.Client{}, nil, apiUrl, nil, nil}
 
 	res, err := client.GetBinIds(PropertyId, Token)
 
@@ -171,8 +164,7 @@ func TestSuccessBinIds(t *testing.T) {
 	}))
 	defer apiSvr.Close()
 	apiUrl, _ := url.Parse(apiSvr.URL)
-	cache := cache.New(15*time.Minute, 30*time.Minute)
-	client := client.BinsClient{http.Client{}, nil, apiUrl, nil, cache}
+	client := client.BinsClient{http.Client{}, nil, apiUrl, nil, nil}
 
 	res, err := client.GetBinIds(PropertyId, Token)
 
@@ -234,7 +226,7 @@ func TestFetchBinIdsOnceWithCache(t *testing.T) {
 	}))
 	defer apiSvr.Close()
 	apiUrl, _ := url.Parse(apiSvr.URL)
-	cache := cache.New(15*time.Minute, 30*time.Minute)
+	cache := expirable.NewLRU[string, interface{}](1024, nil, time.Minute*10)
 	client := client.BinsClient{http.Client{}, nil, apiUrl, nil, cache}
 
 	client.GetBinIds(PropertyId, Token)

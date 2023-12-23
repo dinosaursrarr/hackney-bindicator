@@ -6,8 +6,6 @@ import (
 	"io/ioutil"
 	"net/http"
 	"time"
-
-	"github.com/patrickmn/go-cache"
 )
 
 func (c BinsClient) GetWorkflowSchedule(workflowId, token string) ([]time.Time, error) {
@@ -65,7 +63,7 @@ func (c BinsClient) GetWorkflowSchedule(workflowId, token string) ([]time.Time, 
 	}
 
 	if c.Cache != nil {
-		c.Cache.Set(target, schedule, cache.DefaultExpiration)
+		c.Cache.Add(target, schedule)
 	}
 
 	return schedule, nil

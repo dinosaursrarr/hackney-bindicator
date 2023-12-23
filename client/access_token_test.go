@@ -12,7 +12,7 @@ import (
 	"time"
 
 	"github.com/dinosaursrarr/hackney-bindicator/client"
-	"github.com/patrickmn/go-cache"
+	"github.com/hashicorp/golang-lru/v2/expirable"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -54,7 +54,7 @@ func TestFetchAccessTokenOnceWithCache(t *testing.T) {
 	}))
 	defer svr.Close()
 	startUrl, _ := url.Parse(svr.URL)
-	cache := cache.New(15*time.Minute, 30*time.Minute)
+	cache := expirable.NewLRU[string, interface{}](1024, nil, time.Minute*10)
 	client := client.BinsClient{http.Client{}, nil, nil, startUrl, cache}
 
 	client.GetAccessToken()

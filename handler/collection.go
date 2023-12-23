@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -10,13 +9,13 @@ import (
 
 	"github.com/dinosaursrarr/hackney-bindicator/client"
 	"github.com/gorilla/mux"
-	"github.com/patrickmn/go-cache"
+	"github.com/hashicorp/golang-lru/v2/expirable"
 	"golang.org/x/sync/errgroup"
 )
 
 type CollectionHandler struct {
 	Client client.BinsClient
-	Cache  *cache.Cache
+	Cache  *expirable.LRU[string, interface{}]
 }
 
 func (h *CollectionHandler) Handle(w http.ResponseWriter, r *http.Request) {
@@ -27,14 +26,8 @@ func (h *CollectionHandler) Handle(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	buf := new(bytes.Buffer)
-	if err := r.Write(buf); err != nil {
-		http.Error(w, "Could not serialise request", http.StatusInternalServerError)
-		return
-	}
-	cacheKey := buf.String()
 	if h.Cache != nil {
-		if res, found := h.Cache.Get(cacheKey); found {
+		if res, found := h.Cache.Get(r.URL.String()); found {
 			result := res.(string)
 			fmt.Fprintf(w, result)
 			return
@@ -128,7 +121,7 @@ func (h *CollectionHandler) Handle(w http.ResponseWriter, r *http.Request) {
 	}
 	res := string(resBytes)
 	if h.Cache != nil {
-		h.Cache.Set(cacheKey, res, cache.DefaultExpiration)
+		h.Cache.Add(r.URL.String(), res)
 	}
 	fmt.Fprintf(w, res)
 }

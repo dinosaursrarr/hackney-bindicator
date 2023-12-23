@@ -6,8 +6,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-
-	"github.com/patrickmn/go-cache"
 )
 
 // Want to be able to distinguish this error from other statuses.
@@ -61,7 +59,7 @@ func (c BinsClient) GetBinIds(propertyId, token string) ([]string, error) {
 			continue
 		}
 		if c.Cache != nil {
-			c.Cache.Set(target, attribute.Value, cache.DefaultExpiration)
+			c.Cache.Add(target, attribute.Value)
 		}
 		return attribute.Value, nil
 	}

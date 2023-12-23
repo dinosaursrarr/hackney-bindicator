@@ -6,8 +6,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-
-	"github.com/patrickmn/go-cache"
 )
 
 func (c BinsClient) GetBinType(binId, token string) (string, error) {
@@ -54,7 +52,7 @@ func (c BinsClient) GetBinType(binId, token string) (string, error) {
 			continue
 		}
 		if c.Cache != nil {
-			c.Cache.Set(target, attribute.Value, cache.DefaultExpiration)
+			c.Cache.Add(target, attribute.Value)
 		}
 		return attribute.Value, nil
 	}

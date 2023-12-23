@@ -4,7 +4,6 @@ import (
 	"github.com/dinosaursrarr/hackney-bindicator/client"
 	"github.com/dinosaursrarr/hackney-bindicator/handler"
 
-	// "bytes"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -17,8 +16,8 @@ import (
 	_ "time/tzdata"
 
 	"github.com/gorilla/mux"
+	"github.com/hashicorp/golang-lru/v2/expirable"
 	"github.com/jonboulle/clockwork"
-	"github.com/patrickmn/go-cache"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -684,7 +683,7 @@ func TestFetchOnceWithCache(t *testing.T) {
 	now := time.Date(2023, 12, 15, 3, 19, 46, 72, london)
 	clock := clockwork.NewFakeClockAt(now)
 	client := client.BinsClient{httpClient, clock, apiUrl, startUrl, nil}
-	cache := cache.New(15*time.Minute, 30*time.Minute)
+	cache := expirable.NewLRU[string, interface{}](1024, nil, time.Minute*10)
 	handler := handler.CollectionHandler{client, cache}
 
 	handler.Handle(w1, r1)

@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"github.com/anaskhan96/soup"
-	"github.com/patrickmn/go-cache"
 )
 
 func (c BinsClient) GetAccessToken() (string, error) {
@@ -45,7 +44,7 @@ func (c BinsClient) GetAccessToken() (string, error) {
 		end := strings.Index(t[start:], "\"") + start
 		token := t[start:end]
 		if c.Cache != nil {
-			c.Cache.Set(c.StartUrl.String(), token, cache.DefaultExpiration)
+			c.Cache.Add(c.StartUrl.String(), token)
 		}
 		return token, nil
 	}

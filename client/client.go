@@ -4,8 +4,8 @@ import (
 	"net/http"
 	"net/url"
 
+	"github.com/hashicorp/golang-lru/v2/expirable"
 	"github.com/jonboulle/clockwork"
-	"github.com/patrickmn/go-cache"
 )
 
 const itemUrl = "/api/item/"
@@ -17,5 +17,5 @@ type BinsClient struct {
 	Clock      clockwork.Clock
 	ApiHost    *url.URL
 	StartUrl   *url.URL
-	Cache      *cache.Cache
+	Cache      *expirable.LRU[string, interface{}]
 }

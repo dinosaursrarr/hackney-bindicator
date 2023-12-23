@@ -12,8 +12,8 @@ import (
 	"time"
 
 	"github.com/dinosaursrarr/hackney-bindicator/client"
+	"github.com/hashicorp/golang-lru/v2/expirable"
 	"github.com/jonboulle/clockwork"
-	"github.com/patrickmn/go-cache"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -254,7 +254,7 @@ func TestFetchScheduleOnceWithCache(t *testing.T) {
 	london, _ := time.LoadLocation("Europe/London")
 	now := time.Date(2023, 12, 15, 3, 19, 46, 72, london)
 	clock := clockwork.NewFakeClockAt(now)
-	cache := cache.New(15*time.Minute, 30*time.Minute)
+	cache := expirable.NewLRU[string, interface{}](1024, nil, time.Minute*10)
 	client := client.BinsClient{http.Client{}, clock, apiUrl, nil, cache}
 
 	client.GetWorkflowSchedule(BinId, Token)
