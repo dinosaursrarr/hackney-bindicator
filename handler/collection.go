@@ -9,11 +9,13 @@ import (
 
 	"github.com/dinosaursrarr/hackney-bindicator/client"
 	"github.com/gorilla/mux"
+	"github.com/patrickmn/go-cache"
 	"golang.org/x/sync/errgroup"
 )
 
 type CollectionHandler struct {
 	Client client.BinsClient
+	Cache  *cache.Cache
 }
 
 func (h *CollectionHandler) Handle(w http.ResponseWriter, r *http.Request) {
@@ -21,6 +23,12 @@ func (h *CollectionHandler) Handle(w http.ResponseWriter, r *http.Request) {
 	propertyId := vars["property_id"]
 	if propertyId == "" {
 		http.Error(w, "URL did not include property_id", http.StatusBadRequest)
+		return
+	}
+
+	if res, found := h.Cache.Get(r.URL.String()); found {
+		result := res.(string)
+		fmt.Fprintf(w, result)
 		return
 	}
 
@@ -104,10 +112,12 @@ func (h *CollectionHandler) Handle(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 
-	res, err := json.Marshal(result{PropertyId: propertyId, Bins: bins})
+	resBytes, err := json.Marshal(result{PropertyId: propertyId, Bins: bins})
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	fmt.Fprintf(w, string(res))
+	res := string(resBytes)
+	h.Cache.Set(r.URL.String(), res, cache.DefaultExpiration)
+	fmt.Fprintf(w, res)
 }

@@ -17,6 +17,7 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/jonboulle/clockwork"
+	"github.com/patrickmn/go-cache"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -131,7 +132,6 @@ const Workflow2ScheduleJsonResponse = `
 func TestNoPropertyId(t *testing.T) {
 	r, _ := http.NewRequest(http.MethodGet, RequestUrl, nil)
 	w := httptest.NewRecorder()
-
 	vars := map[string]string{
 		"property_id": "",
 	}
@@ -139,7 +139,8 @@ func TestNoPropertyId(t *testing.T) {
 	httpClient := http.Client{}
 	clock := clockwork.NewFakeClock()
 	client := client.BinsClient{httpClient, clock, &url.URL{}, &url.URL{}}
-	handler := handler.CollectionHandler{client}
+	cache := cache.New(15*time.Minute, 30*time.Minute)
+	handler := handler.CollectionHandler{client, cache}
 
 	handler.Handle(w, r)
 
@@ -154,7 +155,6 @@ func TestCannotGetAccessToken(t *testing.T) {
 	startUrl, _ := url.Parse(startSvr.URL)
 	r, _ := http.NewRequest(http.MethodGet, RequestUrl, nil)
 	w := httptest.NewRecorder()
-
 	vars := map[string]string{
 		"property_id": PropertyId,
 	}
@@ -162,7 +162,8 @@ func TestCannotGetAccessToken(t *testing.T) {
 	httpClient := http.Client{}
 	clock := clockwork.NewFakeClock()
 	client := client.BinsClient{httpClient, clock, &url.URL{}, startUrl}
-	handler := handler.CollectionHandler{client}
+	cache := cache.New(15*time.Minute, 30*time.Minute)
+	handler := handler.CollectionHandler{client, cache}
 
 	handler.Handle(w, r)
 
@@ -182,7 +183,6 @@ func TestClientErrorGettingBinIds(t *testing.T) {
 	apiUrl, _ := url.Parse(apiSvr.URL)
 	r, _ := http.NewRequest(http.MethodGet, RequestUrl, nil)
 	w := httptest.NewRecorder()
-
 	vars := map[string]string{
 		"property_id": PropertyId,
 	}
@@ -190,7 +190,8 @@ func TestClientErrorGettingBinIds(t *testing.T) {
 	httpClient := http.Client{}
 	clock := clockwork.NewFakeClock()
 	client := client.BinsClient{httpClient, clock, apiUrl, startUrl}
-	handler := handler.CollectionHandler{client}
+	cache := cache.New(15*time.Minute, 30*time.Minute)
+	handler := handler.CollectionHandler{client, cache}
 
 	handler.Handle(w, r)
 
@@ -210,7 +211,6 @@ func TestServerErrorGettingBinIds(t *testing.T) {
 	apiUrl, _ := url.Parse(apiSvr.URL)
 	r, _ := http.NewRequest(http.MethodGet, RequestUrl, nil)
 	w := httptest.NewRecorder()
-
 	vars := map[string]string{
 		"property_id": PropertyId,
 	}
@@ -218,7 +218,8 @@ func TestServerErrorGettingBinIds(t *testing.T) {
 	httpClient := http.Client{}
 	clock := clockwork.NewFakeClock()
 	client := client.BinsClient{httpClient, clock, apiUrl, startUrl}
-	handler := handler.CollectionHandler{client}
+	cache := cache.New(15*time.Minute, 30*time.Minute)
+	handler := handler.CollectionHandler{client, cache}
 
 	handler.Handle(w, r)
 
@@ -254,7 +255,6 @@ func TestErrorGettingBinTypes(t *testing.T) {
 	apiUrl, _ := url.Parse(apiSvr.URL)
 	r, _ := http.NewRequest(http.MethodGet, RequestUrl, nil)
 	w := httptest.NewRecorder()
-
 	vars := map[string]string{
 		"property_id": PropertyId,
 	}
@@ -262,7 +262,8 @@ func TestErrorGettingBinTypes(t *testing.T) {
 	httpClient := http.Client{}
 	clock := clockwork.NewFakeClock()
 	client := client.BinsClient{httpClient, clock, apiUrl, startUrl}
-	handler := handler.CollectionHandler{client}
+	cache := cache.New(15*time.Minute, 30*time.Minute)
+	handler := handler.CollectionHandler{client, cache}
 
 	handler.Handle(w, r)
 
@@ -298,7 +299,6 @@ func TestErrorGettingBinWorkflowIds(t *testing.T) {
 	apiUrl, _ := url.Parse(apiSvr.URL)
 	r, _ := http.NewRequest(http.MethodGet, RequestUrl, nil)
 	w := httptest.NewRecorder()
-
 	vars := map[string]string{
 		"property_id": PropertyId,
 	}
@@ -306,7 +306,8 @@ func TestErrorGettingBinWorkflowIds(t *testing.T) {
 	httpClient := http.Client{}
 	clock := clockwork.NewFakeClock()
 	client := client.BinsClient{httpClient, clock, apiUrl, startUrl}
-	handler := handler.CollectionHandler{client}
+	cache := cache.New(15*time.Minute, 30*time.Minute)
+	handler := handler.CollectionHandler{client, cache}
 
 	handler.Handle(w, r)
 
@@ -348,7 +349,6 @@ func TestErrorGettingWorkflowSchedules(t *testing.T) {
 	apiUrl, _ := url.Parse(apiSvr.URL)
 	r, _ := http.NewRequest(http.MethodGet, RequestUrl, nil)
 	w := httptest.NewRecorder()
-
 	vars := map[string]string{
 		"property_id": PropertyId,
 	}
@@ -356,7 +356,8 @@ func TestErrorGettingWorkflowSchedules(t *testing.T) {
 	httpClient := http.Client{}
 	clock := clockwork.NewFakeClock()
 	client := client.BinsClient{httpClient, clock, apiUrl, startUrl}
-	handler := handler.CollectionHandler{client}
+	cache := cache.New(15*time.Minute, 30*time.Minute)
+	handler := handler.CollectionHandler{client, cache}
 
 	handler.Handle(w, r)
 
@@ -398,7 +399,6 @@ func TestNextCollectionDateForEachBin(t *testing.T) {
 	apiUrl, _ := url.Parse(apiSvr.URL)
 	r, _ := http.NewRequest(http.MethodGet, RequestUrl, nil)
 	w := httptest.NewRecorder()
-
 	vars := map[string]string{
 		"property_id": PropertyId,
 	}
@@ -408,7 +408,8 @@ func TestNextCollectionDateForEachBin(t *testing.T) {
 	now := time.Date(2023, 12, 15, 3, 19, 46, 72, london)
 	clock := clockwork.NewFakeClockAt(now)
 	client := client.BinsClient{httpClient, clock, apiUrl, startUrl}
-	handler := handler.CollectionHandler{client}
+	cache := cache.New(15*time.Minute, 30*time.Minute)
+	handler := handler.CollectionHandler{client, cache}
 
 	handler.Handle(w, r)
 
@@ -464,7 +465,6 @@ func TestOnlyFetchEachUniqueWorkflowScheduleOnce(t *testing.T) {
 	apiUrl, _ := url.Parse(apiSvr.URL)
 	r, _ := http.NewRequest(http.MethodGet, RequestUrl, nil)
 	w := httptest.NewRecorder()
-
 	vars := map[string]string{
 		"property_id": PropertyId,
 	}
@@ -474,7 +474,8 @@ func TestOnlyFetchEachUniqueWorkflowScheduleOnce(t *testing.T) {
 	now := time.Date(2023, 12, 15, 3, 19, 46, 72, london)
 	clock := clockwork.NewFakeClockAt(now)
 	client := client.BinsClient{httpClient, clock, apiUrl, startUrl}
-	handler := handler.CollectionHandler{client}
+	cache := cache.New(15*time.Minute, 30*time.Minute)
+	handler := handler.CollectionHandler{client, cache}
 
 	handler.Handle(w, r)
 
@@ -542,7 +543,6 @@ func TestSkipBinWithNoNextCollection(t *testing.T) {
 	apiUrl, _ := url.Parse(apiSvr.URL)
 	r, _ := http.NewRequest(http.MethodGet, RequestUrl, nil)
 	w := httptest.NewRecorder()
-
 	vars := map[string]string{
 		"property_id": PropertyId,
 	}
@@ -552,7 +552,8 @@ func TestSkipBinWithNoNextCollection(t *testing.T) {
 	now := time.Date(2023, 12, 15, 3, 19, 46, 72, london)
 	clock := clockwork.NewFakeClockAt(now)
 	client := client.BinsClient{httpClient, clock, apiUrl, startUrl}
-	handler := handler.CollectionHandler{client}
+	cache := cache.New(15*time.Minute, 30*time.Minute)
+	handler := handler.CollectionHandler{client, cache}
 
 	handler.Handle(w, r)
 
@@ -567,4 +568,58 @@ func TestSkipBinWithNoNextCollection(t *testing.T) {
 				}
 			]
 		}`)
+}
+
+func TestFetchSecondTimeFromCache(t *testing.T) {
+	startSvr := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprintf(w, StartPage)
+	}))
+	startUrl, _ := url.Parse(startSvr.URL)
+	fetches := make(map[*http.Request]int)
+	apiSvr := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		fetches[r] = fetches[r] + 1
+		if strings.Contains(r.URL.String(), PropertyId) {
+			fmt.Fprintf(w, BinIdJsonResponse)
+		}
+		if strings.Contains(r.URL.String(), BinId1) && strings.Contains(r.URL.String(), "/item/") {
+			fmt.Fprintf(w, Bin1TypeJsonResponse)
+		}
+		if strings.Contains(r.URL.String(), BinId2) && strings.Contains(r.URL.String(), "/item/") {
+			fmt.Fprintf(w, Bin2TypeJsonResponse)
+		}
+		if strings.Contains(r.URL.String(), WorkflowId1) && strings.Contains(r.URL.String(), "/workflow/") {
+			fmt.Fprintf(w, Workflow1ScheduleJsonResponse)
+		}
+		b, _ := ioutil.ReadAll(r.Body)
+		body := string(b)
+		if strings.Contains(body, BinId1) && strings.Contains(r.URL.String(), "/query") {
+			fmt.Fprintf(w, Bin1WorkflowIdJsonResponse)
+		}
+		if strings.Contains(body, BinId2) && strings.Contains(r.URL.String(), "/query") {
+			// Return same workflow ID so it should only be fetched once
+			fmt.Fprintf(w, Bin1WorkflowIdJsonResponse)
+		}
+	}))
+	defer apiSvr.Close()
+	apiUrl, _ := url.Parse(apiSvr.URL)
+	r, _ := http.NewRequest(http.MethodGet, RequestUrl, nil)
+	w := httptest.NewRecorder()
+	vars := map[string]string{
+		"property_id": PropertyId,
+	}
+	r = mux.SetURLVars(r, vars)
+	httpClient := http.Client{}
+	london, _ := time.LoadLocation("Europe/London")
+	now := time.Date(2023, 12, 15, 3, 19, 46, 72, london)
+	clock := clockwork.NewFakeClockAt(now)
+	client := client.BinsClient{httpClient, clock, apiUrl, startUrl}
+	cache := cache.New(15*time.Minute, 30*time.Minute)
+	handler := handler.CollectionHandler{client, cache}
+
+	handler.Handle(w, r)
+	handler.Handle(w, r)
+
+	for _, v := range fetches {
+		assert.Equal(t, v, 1)
+	}
 }
