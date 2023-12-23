@@ -57,7 +57,7 @@ func (c BinsClient) GetBinWorkflowId(binId, token string) (string, error) {
 		return "", err
 	}
 	if resp.StatusCode != 200 {
-		return "", fmt.Errorf("Status code %v fetching list of bins", resp.StatusCode)
+		return "", fmt.Errorf("Status code %v fetching workflows of bins", resp.StatusCode)
 	}
 	respBody, err := ioutil.ReadAll(resp.Body)
 	if err != nil {

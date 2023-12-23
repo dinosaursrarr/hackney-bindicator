@@ -21,7 +21,7 @@ func (c BinsClient) GetBinType(binId, token string) (string, error) {
 		return "", err
 	}
 	if resp.StatusCode != 200 {
-		return "", fmt.Errorf("Status code %v fetching list of bins", resp.StatusCode)
+		return "", fmt.Errorf("Status code %v fetching types of bins", resp.StatusCode)
 	}
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
