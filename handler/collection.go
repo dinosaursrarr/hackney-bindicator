@@ -8,6 +8,7 @@ import (
 
 	"github.com/dinosaursrarr/hackney-bindicator/client"
 	"github.com/gorilla/mux"
+	"golang.org/x/sync/errgroup"
 )
 
 type CollectionHandler struct {
@@ -38,22 +39,32 @@ func (h *CollectionHandler) Handle(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	g := new(errgroup.Group)
 	binTypes := make([]string, len(binIds))
 	binWorkflowIds := make([]string, len(binIds))
 	for i, binId := range binIds {
-		binType, err := h.Client.GetBinType(binId, token)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		binTypes[i] = binType
-
-		workflowId, err := h.Client.GetBinWorkflowId(binId, token)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		binWorkflowIds[i] = workflowId
+		i := i
+		binId := binId
+		g.Go(func() error {
+			binType, err := h.Client.GetBinType(binId, token)
+			if err != nil {
+				return err
+			}
+			binTypes[i] = binType
+			return nil
+		})
+		g.Go(func() error {
+			workflowId, err := h.Client.GetBinWorkflowId(binId, token)
+			if err != nil {
+				return err
+			}
+			binWorkflowIds[i] = workflowId
+			return nil
+		})
+	}
+	if err := g.Wait(); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
 
 	schedules := map[string][]time.Time{}
@@ -61,14 +72,21 @@ func (h *CollectionHandler) Handle(w http.ResponseWriter, r *http.Request) {
 		schedules[workflowId] = []time.Time{}
 	}
 
+	g = new(errgroup.Group)
 	for workflowId, _ := range schedules {
 		workflowId := workflowId
-		schedule, err := h.Client.GetWorkflowSchedule(workflowId, token)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		schedules[workflowId] = schedule
+		g.Go(func() error {
+			schedule, err := h.Client.GetWorkflowSchedule(workflowId, token)
+			if err != nil {
+				return err
+			}
+			schedules[workflowId] = schedule
+			return nil
+		})
+	}
+	if err := g.Wait(); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
 
 	type bin struct {

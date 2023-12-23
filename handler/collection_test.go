@@ -266,7 +266,7 @@ func TestErrorGettingBinTypes(t *testing.T) {
 
 	handler.Handle(w, r)
 
-	assert.Equal(t, w.Code, http.StatusInternalServerError)
+	assert.Equal(t, http.StatusInternalServerError, w.Code)
 	assert.Contains(t, w.Body.String(), "fetching types of bins")
 }
 
