@@ -6,6 +6,8 @@ import (
 
 const PropertyId = "property"
 const Token = "token"
+const BinId = "bin"
+const WorkflowId = "workflow"
 
 type fakeRoundTripper struct {
 	Fn func(*http.Request) (*http.Response, error)
