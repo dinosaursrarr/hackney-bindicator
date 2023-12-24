@@ -137,10 +137,39 @@ func TestEmptyBinTypeFound(t *testing.T) {
 	res, err := client.GetBinType(BinId, Token)
 
 	assert.Empty(t, res)
-	assert.Nil(t, err)
+	assert.Contains(t, err.Error(), "Bin type not found")
 }
 
 func TestSuccessBinType(t *testing.T) {
+	apiSvr := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprintf(w, `
+			{
+				"item": {
+					"attributes": [
+						{
+							"attributeCode": "attributes_itemsSubtitle",
+							"value": "Garbage sack"
+						},
+						{
+							"attributeCode": "attributes_wasteContainersType",
+							"value": "5f96b455e36673006420c529"
+						}
+					]
+				}
+			}
+		`)
+	}))
+	defer apiSvr.Close()
+	apiUrl, _ := url.Parse(apiSvr.URL)
+	binsClient := client.BinsClient{http.Client{}, nil, apiUrl, nil, nil}
+
+	res, err := binsClient.GetBinType(BinId, Token)
+
+	assert.Equal(t, res, client.BinType{Name: "Garbage sack", Type: client.Food})
+	assert.Nil(t, err)
+}
+
+func TestSuccessBinTypeName(t *testing.T) {
 	apiSvr := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, `
 			{
@@ -157,11 +186,36 @@ func TestSuccessBinType(t *testing.T) {
 	}))
 	defer apiSvr.Close()
 	apiUrl, _ := url.Parse(apiSvr.URL)
-	client := client.BinsClient{http.Client{}, nil, apiUrl, nil, nil}
+	binsClient := client.BinsClient{http.Client{}, nil, apiUrl, nil, nil}
 
-	res, err := client.GetBinType(BinId, Token)
+	res, err := binsClient.GetBinType(BinId, Token)
 
-	assert.Equal(t, res, "Garbage sack")
+	assert.Equal(t, res, client.BinType{Name: "Garbage sack"})
+	assert.Nil(t, err)
+}
+
+func TestSuccessBinTypeType(t *testing.T) {
+	apiSvr := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprintf(w, `
+			{
+				"item": {
+					"attributes": [
+						{
+							"attributeCode": "attributes_wasteContainersType",
+							"value": "5f96b455e36673006420c529"
+						}
+					]
+				}
+			}
+		`)
+	}))
+	defer apiSvr.Close()
+	apiUrl, _ := url.Parse(apiSvr.URL)
+	binsClient := client.BinsClient{http.Client{}, nil, apiUrl, nil, nil}
+
+	res, err := binsClient.GetBinType(BinId, Token)
+
+	assert.Equal(t, res, client.BinType{Type: client.Food})
 	assert.Nil(t, err)
 }
 

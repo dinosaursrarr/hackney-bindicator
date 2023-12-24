@@ -40,6 +40,7 @@ const BinIdJsonResponse = `
 	}
 `
 const Bin1Type = "Garbage can"
+const Bin1RefuseType = "5f96b6f8d1f4f500660f3058"
 const Bin1TypeJsonResponse = `
 	{
 		"item": {
@@ -47,6 +48,10 @@ const Bin1TypeJsonResponse = `
 				{
 					"attributeCode": "attributes_itemsSubtitle",
 					"value": "` + Bin1Type + `"
+				},
+				{
+					"attributeCode": "attributes_wasteContainersType",
+					"value": "` + Bin1RefuseType + `"
 				}
 			]
 		}
@@ -409,10 +414,12 @@ func TestNextCollectionDateForEachBin(t *testing.T) {
 			"Bins": [
 				{
 					"Name": "Garbage can",
+					"Type": "garden",
 					"NextCollection": "2024-01-01T00:00:00Z"
 				},
 				{
 					"Name": "Dumpster",
+					"Type": "unknown",
 					"NextCollection": "2024-01-02T00:00:00Z"
 				}
 			]
@@ -475,10 +482,12 @@ func TestOnlyFetchEachUniqueWorkflowScheduleOnce(t *testing.T) {
 			"Bins": [
 				{
 					"Name": "Garbage can",
+					"Type": "garden",
 					"NextCollection": "2024-01-01T00:00:00Z"
 				},
 				{
 					"Name": "Dumpster",
+					"Type": "unknown",
 					"NextCollection": "2024-01-01T00:00:00Z"
 				}
 			]
@@ -552,6 +561,7 @@ func TestSkipBinWithNoNextCollection(t *testing.T) {
 			"Bins": [
 				{
 					"Name": "Garbage can",
+					"Type": "garden",
 					"NextCollection": "2024-01-01T00:00:00Z"
 				}
 			]

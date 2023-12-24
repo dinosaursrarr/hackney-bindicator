@@ -45,17 +45,19 @@ The output format for a given property ID is:
   "Bins": [
     {
       "Name": "Garbage can",
+      "Type": "rubbish",
       "NextCollection": "2024-01-01T00:00:00Z"
     },
     {
       "Name": "Recycling sack",
+      "Type": "recycling",
       "NextCollection": "2024-01-05T00:00:00Z"
     }
   ]
 }
 ```
 
-All collection dates are truncated to the start of the relevant day (the time part is always `00:00:00`). Bin names are passed through from the Council's API. I believe there is a finite set, but am not confident I have seen all the values yet.
+All collection dates are truncated to the start of the relevant day (the time part is always `00:00:00`). Bin names are passed through from the Council's API. I believe there is a finite set, but am not confident I have seen all the values yet. The values seen to date are translated to one of these types: `food`, `recycling`, `garden` and `rubbish` (otherwise `unknown`).
 
 ## Use case
 

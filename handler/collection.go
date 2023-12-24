@@ -51,7 +51,7 @@ func (h *CollectionHandler) Handle(w http.ResponseWriter, r *http.Request) {
 	}
 
 	g := new(errgroup.Group)
-	binTypes := make([]string, len(binIds))
+	binTypes := make([]client.BinType, len(binIds))
 	binWorkflowIds := make([]string, len(binIds))
 	var schedulesStarted sync.Map
 	var schedules sync.Map
@@ -92,6 +92,7 @@ func (h *CollectionHandler) Handle(w http.ResponseWriter, r *http.Request) {
 
 	type bin struct {
 		Name           string
+		Type           string
 		NextCollection time.Time
 	}
 	type result struct {
@@ -109,7 +110,8 @@ func (h *CollectionHandler) Handle(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 		bins = append(bins, bin{
-			Name:           binTypes[i],
+			Name:           binTypes[i].Name,
+			Type:           binTypes[i].Type.String(),
 			NextCollection: schedule[0],
 		})
 	}
