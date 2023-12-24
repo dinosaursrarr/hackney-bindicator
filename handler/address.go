@@ -60,5 +60,6 @@ func (h *AddressHandler) Handle(w http.ResponseWriter, r *http.Request) {
 	if h.Cache != nil {
 		h.Cache.Add(r.URL.String(), res)
 	}
+	w.Header().Set("Content-Type", "application/json")
 	fmt.Fprintf(w, res)
 }

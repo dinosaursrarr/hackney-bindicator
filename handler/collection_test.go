@@ -417,6 +417,7 @@ func TestNextCollectionDateForEachBin(t *testing.T) {
 				}
 			]
 		}`)
+	assert.Contains(t, w.Header(), "Content-Type")
 }
 
 func TestOnlyFetchEachUniqueWorkflowScheduleOnce(t *testing.T) {

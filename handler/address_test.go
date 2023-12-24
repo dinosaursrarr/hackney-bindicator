@@ -176,6 +176,7 @@ func TestSuccess(t *testing.T) {
 				"Name": "bar"
 			}
 		]`)
+	assert.Contains(t, w.Header(), "Content-Type")
 }
 
 func TestFetchAddressesTwiceWithoutCache(t *testing.T) {
