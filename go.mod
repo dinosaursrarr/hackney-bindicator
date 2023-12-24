@@ -3,6 +3,7 @@ module github.com/dinosaursrarr/hackney-bindicator
 go 1.21.5
 
 require (
+	facette.io/natsort v0.0.0-20181210072756-2cd4dd1e2dcb
 	github.com/anaskhan96/soup v1.2.5
 	github.com/gorilla/mux v1.8.1
 	github.com/hashicorp/golang-lru/v2 v2.0.7

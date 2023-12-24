@@ -1,3 +1,5 @@
+facette.io/natsort v0.0.0-20181210072756-2cd4dd1e2dcb h1:1pSweJFeR3Pqx7uoelppkzeegfUBXL6I2FFAbfXw570=
+facette.io/natsort v0.0.0-20181210072756-2cd4dd1e2dcb/go.mod h1:npRYmtaITVom7rcSo+pRURltHSG2r4TQM1cdqJ2dUB0=
 github.com/anaskhan96/soup v1.2.5 h1:V/FHiusdTrPrdF4iA1YkVxsOpdNcgvqT1hG+YtcZ5hM=
 github.com/anaskhan96/soup v1.2.5/go.mod h1:6YnEp9A2yywlYdM4EgDz9NEHclocMepEtku7wg6Cq3s=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=

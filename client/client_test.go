@@ -8,6 +8,7 @@ const PropertyId = "property"
 const Token = "token"
 const BinId = "bin"
 const WorkflowId = "workflow"
+const Postcode = "E8 1EA"
 
 type fakeRoundTripper struct {
 	Fn func(*http.Request) (*http.Response, error)
