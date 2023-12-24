@@ -4,7 +4,6 @@ import (
 	"github.com/dinosaursrarr/hackney-bindicator/client"
 	"github.com/dinosaursrarr/hackney-bindicator/handler"
 
-	"fmt"
 	"log"
 	"net/http"
 	"net/url"
@@ -17,10 +16,6 @@ import (
 	"github.com/hashicorp/golang-lru/v2/expirable"
 	"github.com/jonboulle/clockwork"
 )
-
-func helloHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "Hello there")
-}
 
 func main() {
 	port := os.Getenv("PORT")
@@ -40,11 +35,12 @@ func main() {
 
 	collectionHandler := handler.CollectionHandler{binsClient, cache}
 	addressHandler := handler.AddressHandler{binsClient, cache}
+	fs := http.FileServer(http.Dir("./static"))
 
 	r := mux.NewRouter()
-	r.HandleFunc("/", helloHandler)
 	r.HandleFunc("/property/{property_id}", collectionHandler.Handle)
 	r.HandleFunc("/addresses/{postcode}", addressHandler.Handle)
+	r.HandleFunc("/", fs.ServeHTTP)
 
 	log.Println("listening on", port)
 	log.Fatal(http.ListenAndServe(":"+port, r))
