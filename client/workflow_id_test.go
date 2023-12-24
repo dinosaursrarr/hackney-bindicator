@@ -37,6 +37,17 @@ func TestSetAccessTokenGettingWorkflowId(t *testing.T) {
 	client.GetBinWorkflowId(BinId, Token)
 }
 
+func TestSetUserAgentGettingWorkflowId(t *testing.T) {
+	apiSvr := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		assert.NotEmpty(t, r.Header["User-Agent"])
+	}))
+	defer apiSvr.Close()
+	apiUrl, _ := url.Parse(apiSvr.URL)
+	client := client.BinsClient{http.Client{}, nil, apiUrl, nil, nil}
+
+	client.GetBinWorkflowId(BinId, Token)
+}
+
 func TestHttpErrorGettingWorkflowId(t *testing.T) {
 	apiSvr := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
 	defer apiSvr.Close()

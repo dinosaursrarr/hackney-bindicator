@@ -22,6 +22,7 @@ func (c BinsClient) GetBinType(binId, token string) (string, error) {
 		return "", err
 	}
 	req.Header.Add("Authorization", fmt.Sprint("Bearer ", token))
+	req.Header.Add("User-Agent", userAgent)
 
 	resp, err := c.HttpClient.Do(req)
 	if err != nil {

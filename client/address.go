@@ -133,6 +133,7 @@ func (c BinsClient) GetAddresses(postcode, token string) ([]Address, error) {
 	}
 	req.Header.Add("Authorization", fmt.Sprint("Bearer ", token))
 	req.Header.Add("Content-Type", "application/json")
+	req.Header.Add("User-Agent", userAgent)
 
 	resp, err := c.HttpClient.Do(req)
 	if err != nil {

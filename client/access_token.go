@@ -21,6 +21,7 @@ func (c BinsClient) GetAccessToken() (string, error) {
 	if err != nil {
 		return "", err
 	}
+	req.Header.Add("User-Agent", userAgent)
 	resp, err := c.HttpClient.Do(req)
 	if err != nil {
 		return "", err

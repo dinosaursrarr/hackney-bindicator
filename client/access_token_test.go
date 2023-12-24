@@ -30,6 +30,17 @@ func TestSuccessAccessToken(t *testing.T) {
 	assert.Nil(t, err)
 }
 
+func TestSetUserAgentGettingAccessToken(t *testing.T) {
+	svr := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		assert.NotEmpty(t, r.Header["User-Agent"])
+	}))
+	defer svr.Close()
+	startUrl, _ := url.Parse(svr.URL)
+	client := client.BinsClient{http.Client{}, nil, nil, startUrl, nil}
+
+	client.GetAccessToken()
+}
+
 func TestFetchAccessTokenTwiceWithoutCache(t *testing.T) {
 	fetches := 0
 	svr := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

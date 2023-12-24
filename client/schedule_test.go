@@ -39,6 +39,18 @@ func TestSetAccessTokenGettingWorkflowSchedule(t *testing.T) {
 	client.GetWorkflowSchedule(WorkflowId, Token)
 }
 
+func TestSetUserAgentGettingWorkflowSchedule(t *testing.T) {
+	apiSvr := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		assert.NotEmpty(t, r.Header["User-Agent"])
+	}))
+	defer apiSvr.Close()
+	apiUrl, _ := url.Parse(apiSvr.URL)
+	clock := clockwork.NewFakeClock()
+	client := client.BinsClient{http.Client{}, clock, apiUrl, nil, nil}
+
+	client.GetWorkflowSchedule(WorkflowId, Token)
+}
+
 func TestHttpErrorGettingWorkflowSchedule(t *testing.T) {
 	apiSvr := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
 	defer apiSvr.Close()

@@ -11,6 +11,7 @@ import (
 const itemUrl = "/api/item/"
 const queryUrl = "/api/aqs/query"
 const workflowUrl = "/api/workflow/"
+const userAgent = "github.com/dinosaursrarr/hackney-bindicator"
 
 type BinsClient struct {
 	HttpClient http.Client

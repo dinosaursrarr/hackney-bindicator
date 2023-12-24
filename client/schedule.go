@@ -26,6 +26,7 @@ func (c BinsClient) GetWorkflowSchedule(workflowId, token string) ([]time.Time, 
 		return []time.Time{}, err
 	}
 	req.Header.Add("Authorization", fmt.Sprint("Bearer ", token))
+	req.Header.Add("User-Agent", userAgent)
 
 	resp, err := c.HttpClient.Do(req)
 	if err != nil {

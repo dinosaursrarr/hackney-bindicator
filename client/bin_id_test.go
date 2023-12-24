@@ -37,6 +37,17 @@ func TestSetAccessTokenGettingBinIds(t *testing.T) {
 	client.GetBinIds(PropertyId, Token)
 }
 
+func TestSetUserAgentGettingBinIds(t *testing.T) {
+	apiSvr := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		assert.NotEmpty(t, r.Header["User-Agent"])
+	}))
+	defer apiSvr.Close()
+	apiUrl, _ := url.Parse(apiSvr.URL)
+	client := client.BinsClient{http.Client{}, nil, apiUrl, nil, nil}
+
+	client.GetBinIds(PropertyId, Token)
+}
+
 func TestHttpErrorGettingBinIds(t *testing.T) {
 	apiSvr := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
 	defer apiSvr.Close()

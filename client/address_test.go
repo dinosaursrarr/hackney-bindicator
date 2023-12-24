@@ -67,6 +67,17 @@ func TestSetAccessTokenGettingAddresses(t *testing.T) {
 	client.GetAddresses(Postcode, Token)
 }
 
+func TestSetUserAgentGettingAddresses(t *testing.T) {
+	apiSvr := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		assert.NotEmpty(t, r.Header["User-Agent"])
+	}))
+	defer apiSvr.Close()
+	apiUrl, _ := url.Parse(apiSvr.URL)
+	client := client.BinsClient{http.Client{}, nil, apiUrl, nil, nil}
+
+	client.GetAddresses(Postcode, Token)
+}
+
 func TestHttpErrorGettingAddresses(t *testing.T) {
 	apiSvr := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
 	defer apiSvr.Close()
