@@ -38,11 +38,13 @@ func main() {
 	startUrl, _ := url.Parse("https://hackney-waste-pages.azurewebsites.net")
 	binsClient := client.BinsClient{httpClient, clock, apiHost, startUrl, cache}
 
-	handler := handler.CollectionHandler{binsClient, cache}
+	collectionHandler := handler.CollectionHandler{binsClient, cache}
+	addressHandler := handler.AddressHandler{binsClient, cache}
 
 	r := mux.NewRouter()
 	r.HandleFunc("/", helloHandler)
-	r.HandleFunc("/property/{property_id}", handler.Handle)
+	r.HandleFunc("/property/{property_id}", collectionHandler.Handle)
+	r.HandleFunc("/addresses/{postcode}", addressHandler.Handle)
 
 	log.Println("listening on", port)
 	log.Fatal(http.ListenAndServe(":"+port, r))

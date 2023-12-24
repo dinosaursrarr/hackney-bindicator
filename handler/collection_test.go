@@ -21,10 +21,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-const RequestUrl = "/"
 const PropertyId = "property_id"
-const AccessToken = "access_token"
-const StartPage = "<script>ALLOY_APP_TOKEN = \"" + AccessToken + "\"<script>"
 const BinId1 = "bin1"
 const BinId2 = "bin2"
 const BinIdJsonResponse = `
