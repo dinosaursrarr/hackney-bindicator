@@ -4,6 +4,7 @@ import (
 	"github.com/dinosaursrarr/hackney-bindicator/client"
 	"github.com/dinosaursrarr/hackney-bindicator/handler"
 
+	"embed"
 	"log"
 	"net/http"
 	"net/url"
@@ -16,6 +17,12 @@ import (
 	"github.com/hashicorp/golang-lru/v2/expirable"
 	"github.com/jonboulle/clockwork"
 )
+
+//go:embed README.md
+var readme []byte
+
+//go:embed static/*
+var static embed.FS
 
 func main() {
 	port := os.Getenv("PORT")
@@ -35,12 +42,13 @@ func main() {
 
 	collectionHandler := handler.CollectionHandler{binsClient, cache}
 	addressHandler := handler.AddressHandler{binsClient, cache}
-	fs := http.FileServer(http.Dir("./static"))
+	readmeHandler := handler.MarkdownHandler{readme, "Hackney Bindicator", "static/style.css"}
 
 	r := mux.NewRouter()
 	r.HandleFunc("/property/{property_id}", collectionHandler.Handle)
 	r.HandleFunc("/addresses/{postcode}", addressHandler.Handle)
-	r.HandleFunc("/", fs.ServeHTTP)
+	r.PathPrefix("/static/").Handler(http.FileServer(http.FS(static)))
+	r.HandleFunc("/", readmeHandler.Handle)
 
 	log.Println("listening on", port)
 	log.Fatal(http.ListenAndServe(":"+port, r))
