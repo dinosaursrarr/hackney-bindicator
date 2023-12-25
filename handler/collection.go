@@ -51,11 +51,11 @@ func (h *CollectionHandler) Handle(w http.ResponseWriter, r *http.Request) {
 	}
 
 	g := new(errgroup.Group)
-	binTypes := make([]client.BinType, len(binIds))
-	binWorkflowIds := make([]string, len(binIds))
+	binTypes := make([]client.BinType, len(binIds.Ids))
+	binWorkflowIds := make([]string, len(binIds.Ids))
 	var schedulesStarted sync.Map
 	var schedules sync.Map
-	for i, binId := range binIds {
+	for i, binId := range binIds.Ids {
 		i := i
 		binId := binId
 		g.Go(func() error {
@@ -97,10 +97,11 @@ func (h *CollectionHandler) Handle(w http.ResponseWriter, r *http.Request) {
 	}
 	type result struct {
 		PropertyId string
+		Name       string
 		Bins       []bin
 	}
 	var bins []bin
-	for i, _ := range binIds {
+	for i, _ := range binIds.Ids {
 		s, ok := schedules.Load(binWorkflowIds[i])
 		if !ok {
 			continue
@@ -116,7 +117,11 @@ func (h *CollectionHandler) Handle(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 
-	resBytes, err := json.Marshal(result{PropertyId: propertyId, Bins: bins})
+	resBytes, err := json.Marshal(result{
+		PropertyId: propertyId,
+		Name:       binIds.Name,
+		Bins:       bins,
+	})
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

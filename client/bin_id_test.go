@@ -138,6 +138,10 @@ func TestNoBinIdsFound(t *testing.T) {
 						{
 							"attributeCode": "attributes_wasteContainersAssignableWasteContainers",
 							"value": []
+						},
+						{
+							"attributeCode": "attributes_itemsTitle",
+							"value": "foo"
 						}
 					]
 				}
@@ -146,12 +150,12 @@ func TestNoBinIdsFound(t *testing.T) {
 	}))
 	defer apiSvr.Close()
 	apiUrl, _ := url.Parse(apiSvr.URL)
-	client := client.BinsClient{http.Client{}, nil, apiUrl, nil, nil}
+	binsClient := client.BinsClient{http.Client{}, nil, apiUrl, nil, nil}
 
-	res, err := client.GetBinIds(PropertyId, Token)
+	res, err := binsClient.GetBinIds(PropertyId, Token)
 
 	assert.Empty(t, res)
-	assert.Nil(t, err)
+	assert.Contains(t, err.Error(), "Bin IDs not found")
 }
 
 func TestSuccessBinIds(t *testing.T) {
@@ -167,6 +171,10 @@ func TestSuccessBinIds(t *testing.T) {
 								"bar",
 								"baz"
 							]
+						},
+						{
+							"attributeCode": "attributes_itemsTitle",
+							"value": "foo"
 						}
 					]
 				}
@@ -175,11 +183,14 @@ func TestSuccessBinIds(t *testing.T) {
 	}))
 	defer apiSvr.Close()
 	apiUrl, _ := url.Parse(apiSvr.URL)
-	client := client.BinsClient{http.Client{}, nil, apiUrl, nil, nil}
+	binsClient := client.BinsClient{http.Client{}, nil, apiUrl, nil, nil}
 
-	res, err := client.GetBinIds(PropertyId, Token)
+	res, err := binsClient.GetBinIds(PropertyId, Token)
 
-	assert.Equal(t, res, []string{"foo", "bar", "baz"})
+	assert.Equal(t, res, client.BinIds{
+		Name: "foo",
+		Ids:  []string{"foo", "bar", "baz"},
+	})
 	assert.Nil(t, err)
 }
 

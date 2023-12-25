@@ -22,6 +22,7 @@ import (
 )
 
 const PropertyId = "property_id"
+const Address = "  29   ACACIA  AVENUE "
 const BinId1 = "bin1"
 const BinId2 = "bin2"
 const BinIdJsonResponse = `
@@ -34,6 +35,10 @@ const BinIdJsonResponse = `
 						"` + BinId1 + `",
 						"` + BinId2 + `"
 					]
+				},
+				{
+					"attributeCode": "attributes_itemsTitle",
+					"value": "` + Address + `"
 				}
 			]
 		}
@@ -413,6 +418,7 @@ func TestNextCollectionDateForEachBin(t *testing.T) {
 	assert.JSONEq(t, w.Body.String(), `
 		{
 			"PropertyId": "property_id",
+			"Name": "29 ACACIA AVENUE",
 			"Bins": [
 				{
 					"Name": "Garbage can",
@@ -481,6 +487,7 @@ func TestOnlyFetchEachUniqueWorkflowScheduleOnce(t *testing.T) {
 	assert.JSONEq(t, w.Body.String(), `
 		{
 			"PropertyId": "property_id",
+			"Name": "29 ACACIA AVENUE",
 			"Bins": [
 				{
 					"Name": "Garbage can",
@@ -560,6 +567,7 @@ func TestSkipBinWithNoNextCollection(t *testing.T) {
 	assert.JSONEq(t, w.Body.String(), `
 		{
 			"PropertyId": "property_id",
+			"Name": "29 ACACIA AVENUE",
 			"Bins": [
 				{
 					"Name": "Garbage can",

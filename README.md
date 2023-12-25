@@ -42,6 +42,7 @@ The output format for a given property ID is:
 ```json
 {
   "PropertyId": "foo",
+  "Name": "29 ACACIA AVENUE",
   "Bins": [
     {
       "Name": "Garbage can",

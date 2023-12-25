@@ -41,10 +41,6 @@ var postcode = regexp.MustCompile(`^(?P<outer>[A-Z]{1,2}[0-9][A-Z0-9]?) ?(?P<inn
 var NotHackneyErr = errors.New("Hackney postcodes must begin with one of " + strings.Join(hackneyPostcodes, ", "))
 var InvalidPostcodeErr = errors.New("Not a valid postcode")
 
-func tidy(s string) string {
-	return space.ReplaceAllString(strings.TrimSpace(s), " ")
-}
-
 func canonicalize(s string) (string, error) {
 	tidy := strings.ToUpper(space.ReplaceAllString(strings.TrimSpace(s), " "))
 	if !postcode.MatchString(tidy) {
