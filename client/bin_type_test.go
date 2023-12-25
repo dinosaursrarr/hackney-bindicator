@@ -152,7 +152,9 @@ func TestSuccessBinType(t *testing.T) {
 						},
 						{
 							"attributeCode": "attributes_wasteContainersType",
-							"value": "5f96b455e36673006420c529"
+							"value": [
+								"5f96b455e36673006420c529"
+							]
 						}
 					]
 				}
@@ -202,7 +204,9 @@ func TestSuccessBinTypeType(t *testing.T) {
 					"attributes": [
 						{
 							"attributeCode": "attributes_wasteContainersType",
-							"value": "5f96b455e36673006420c529"
+							"value": [
+								"5f96b455e36673006420c529"
+							]
 						}
 					]
 				}

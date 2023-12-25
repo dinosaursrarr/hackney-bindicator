@@ -51,7 +51,9 @@ const Bin1TypeJsonResponse = `
 				},
 				{
 					"attributeCode": "attributes_wasteContainersType",
-					"value": "` + Bin1RefuseType + `"
+					"value": [
+						"` + Bin1RefuseType + `"
+					]
 				}
 			]
 		}

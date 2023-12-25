@@ -114,8 +114,8 @@ func (c BinsClient) GetBinType(binId, token string) (BinType, error) {
 	type item struct {
 		Item struct {
 			Attributes []struct {
-				AttributeCode string `json:"attributeCode"`
-				Value         string `json:"value"`
+				AttributeCode string          `json:"attributeCode"`
+				Value         json.RawMessage `json:"value"`
 			} `json:"attributes"`
 		} `json:"item"`
 	}
@@ -128,14 +128,16 @@ func (c BinsClient) GetBinType(binId, token string) (BinType, error) {
 
 	for _, attribute := range data.Item.Attributes {
 		if attribute.AttributeCode == "attributes_itemsSubtitle" {
-			name = attribute.Value
+			json.Unmarshal(attribute.Value, &name)
 			continue
 		}
 		if attribute.AttributeCode == "attributes_wasteContainersType" {
-			fmt.Println(attribute.Value)
-			fmt.Println(extractType(attribute.Value))
-			fmt.Println(extractType("5f96b455e36673006420c529"))
-			refuseType = extractType(attribute.Value)
+			var val []string
+			json.Unmarshal(attribute.Value, &val)
+			if len(val) == 0 {
+				continue
+			}
+			refuseType = extractType(val[0])
 			continue
 		}
 	}
