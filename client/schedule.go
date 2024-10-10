@@ -26,6 +26,7 @@ func (c BinsClient) GetWorkflowSchedule(workflowId string) ([]time.Time, error) 
 		return []time.Time{}, err
 	}
 	req.Header.Add("User-Agent", userAgent)
+	req.Header.Add("Accept", "application/json")
 
 	resp, err := c.HttpClient.Do(req)
 	if err != nil {

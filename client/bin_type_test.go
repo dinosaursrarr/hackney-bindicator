@@ -18,23 +18,12 @@ import (
 
 func TestBadBinTypeUrl(t *testing.T) {
 	badUrl, _ := url.Parse("ftp://foo.bar")
-	client := client.BinsClient{http.Client{}, nil, badUrl, nil, nil}
+	client := client.BinsClient{http.Client{}, nil, badUrl, nil}
 
-	res, err := client.GetBinType(BinId, Token)
+	res, err := client.GetBinType(BinId)
 
 	assert.Empty(t, res)
 	assert.Contains(t, err.Error(), "unsupported protocol scheme")
-}
-
-func TestSetAccessTokenGettingBinType(t *testing.T) {
-	apiSvr := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		assert.Contains(t, r.Header["Authorization"], "Bearer "+Token)
-	}))
-	defer apiSvr.Close()
-	apiUrl, _ := url.Parse(apiSvr.URL)
-	client := client.BinsClient{http.Client{}, nil, apiUrl, nil, nil}
-
-	client.GetBinType(BinId, Token)
 }
 
 func TestSetUserAgentGettingBinType(t *testing.T) {
@@ -43,9 +32,20 @@ func TestSetUserAgentGettingBinType(t *testing.T) {
 	}))
 	defer apiSvr.Close()
 	apiUrl, _ := url.Parse(apiSvr.URL)
-	client := client.BinsClient{http.Client{}, nil, apiUrl, nil, nil}
+	client := client.BinsClient{http.Client{}, nil, apiUrl, nil}
 
-	client.GetBinType(BinId, Token)
+	client.GetBinType(BinId)
+}
+
+func TestSetAcceptGettingBinType(t *testing.T) {
+	apiSvr := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		assert.NotEmpty(t, r.Header["Accept"])
+	}))
+	defer apiSvr.Close()
+	apiUrl, _ := url.Parse(apiSvr.URL)
+	client := client.BinsClient{http.Client{}, nil, apiUrl, nil}
+
+	client.GetBinType(BinId)
 }
 
 func TestHttpErrorGettingBinType(t *testing.T) {
@@ -59,9 +59,9 @@ func TestHttpErrorGettingBinType(t *testing.T) {
 			},
 		},
 	}
-	client := client.BinsClient{httpClient, nil, apiUrl, nil, nil}
+	client := client.BinsClient{httpClient, nil, apiUrl, nil}
 
-	res, err := client.GetBinType(BinId, Token)
+	res, err := client.GetBinType(BinId)
 
 	assert.Empty(t, res)
 	assert.Contains(t, err.Error(), "foo")
@@ -73,9 +73,9 @@ func TestBadStatusCodeGettingBinType(t *testing.T) {
 	}))
 	defer apiSvr.Close()
 	apiUrl, _ := url.Parse(apiSvr.URL)
-	client := client.BinsClient{http.Client{}, nil, apiUrl, nil, nil}
+	client := client.BinsClient{http.Client{}, nil, apiUrl, nil}
 
-	res, err := client.GetBinType(BinId, Token)
+	res, err := client.GetBinType(BinId)
 
 	assert.Empty(t, res)
 	assert.Contains(t, err.Error(), "Status code 418")
@@ -95,9 +95,9 @@ func TestErrorReadingBinType(t *testing.T) {
 			},
 		},
 	}
-	client := client.BinsClient{httpClient, nil, apiUrl, nil, nil}
+	client := client.BinsClient{httpClient, nil, apiUrl, nil}
 
-	res, err := client.GetBinType(BinId, Token)
+	res, err := client.GetBinType(BinId)
 
 	assert.Empty(t, res)
 	assert.Contains(t, err.Error(), "nope")
@@ -107,9 +107,9 @@ func TestBinTypeNotFound(t *testing.T) {
 	apiSvr := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
 	defer apiSvr.Close()
 	apiUrl, _ := url.Parse(apiSvr.URL)
-	client := client.BinsClient{http.Client{}, nil, apiUrl, nil, nil}
+	client := client.BinsClient{http.Client{}, nil, apiUrl, nil}
 
-	res, err := client.GetBinType(BinId, Token)
+	res, err := client.GetBinType(BinId)
 
 	assert.Empty(t, res)
 	assert.Contains(t, err.Error(), "Bin type not found")
@@ -119,22 +119,15 @@ func TestEmptyBinTypeFound(t *testing.T) {
 	apiSvr := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, `
 			{
-				"item": {
-					"attributes": [
-						{
-							"attributeCode": "attributes_itemsSubtitle",
-							"value": ""
-						}
-					]
-				}
+				"subTitle": ""
 			}
 		`)
 	}))
 	defer apiSvr.Close()
 	apiUrl, _ := url.Parse(apiSvr.URL)
-	client := client.BinsClient{http.Client{}, nil, apiUrl, nil, nil}
+	client := client.BinsClient{http.Client{}, nil, apiUrl, nil}
 
-	res, err := client.GetBinType(BinId, Token)
+	res, err := client.GetBinType(BinId)
 
 	assert.Empty(t, res)
 	assert.Contains(t, err.Error(), "Bin type not found")
@@ -144,30 +137,18 @@ func TestSuccessBinType(t *testing.T) {
 	apiSvr := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, `
 			{
-				"item": {
-					"attributes": [
-						{
-							"attributeCode": "attributes_itemsSubtitle",
-							"value": "Garbage sack"
-						},
-						{
-							"attributeCode": "attributes_wasteContainersType",
-							"value": [
-								"5f96b455e36673006420c529"
-							]
-						}
-					]
-				}
+				"subTitle": "Garbage sack",
+				"binType": "5f96b455e36673006420c529"
 			}
 		`)
 	}))
 	defer apiSvr.Close()
 	apiUrl, _ := url.Parse(apiSvr.URL)
-	binsClient := client.BinsClient{http.Client{}, nil, apiUrl, nil, nil}
+	binsClient := client.BinsClient{http.Client{}, nil, apiUrl, nil}
 
-	res, err := binsClient.GetBinType(BinId, Token)
+	res, err := binsClient.GetBinType(BinId)
 
-	assert.Equal(t, res, client.BinType{Name: "Garbage sack", Type: client.Food})
+	assert.Equal(t, client.BinType{Name: "Garbage sack", Type: client.Food}, res)
 	assert.Nil(t, err)
 }
 
@@ -175,22 +156,15 @@ func TestSuccessBinTypeName(t *testing.T) {
 	apiSvr := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, `
 			{
-				"item": {
-					"attributes": [
-						{
-							"attributeCode": "attributes_itemsSubtitle",
-							"value": "Garbage sack"
-						}
-					]
-				}
+				"subTitle": "Garbage sack"
 			}
 		`)
 	}))
 	defer apiSvr.Close()
 	apiUrl, _ := url.Parse(apiSvr.URL)
-	binsClient := client.BinsClient{http.Client{}, nil, apiUrl, nil, nil}
+	binsClient := client.BinsClient{http.Client{}, nil, apiUrl, nil}
 
-	res, err := binsClient.GetBinType(BinId, Token)
+	res, err := binsClient.GetBinType(BinId)
 
 	assert.Equal(t, res, client.BinType{Name: "Garbage sack"})
 	assert.Nil(t, err)
@@ -200,24 +174,15 @@ func TestSuccessBinTypeType(t *testing.T) {
 	apiSvr := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, `
 			{
-				"item": {
-					"attributes": [
-						{
-							"attributeCode": "attributes_wasteContainersType",
-							"value": [
-								"5f96b455e36673006420c529"
-							]
-						}
-					]
-				}
+				"binType": "5f96b455e36673006420c529"
 			}
 		`)
 	}))
 	defer apiSvr.Close()
 	apiUrl, _ := url.Parse(apiSvr.URL)
-	binsClient := client.BinsClient{http.Client{}, nil, apiUrl, nil, nil}
+	binsClient := client.BinsClient{http.Client{}, nil, apiUrl, nil}
 
-	res, err := binsClient.GetBinType(BinId, Token)
+	res, err := binsClient.GetBinType(BinId)
 
 	assert.Equal(t, res, client.BinType{Type: client.Food})
 	assert.Nil(t, err)
@@ -228,24 +193,18 @@ func TestFetchBinTypeTwiceWithoutCache(t *testing.T) {
 	apiSvr := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, `
 			{
-				"item": {
-					"attributes": [
-						{
-							"attributeCode": "attributes_itemsSubtitle",
-							"value": "Garbage sack"
-						}
-					]
-				}
+				"subTitle": "Garbage sack",
+				"binType": "5f96b455e36673006420c529"
 			}
 		`)
 		fetches += 1
 	}))
 	defer apiSvr.Close()
 	apiUrl, _ := url.Parse(apiSvr.URL)
-	client := client.BinsClient{http.Client{}, nil, apiUrl, nil, nil}
+	client := client.BinsClient{http.Client{}, nil, apiUrl, nil}
 
-	client.GetBinType(BinId, Token)
-	client.GetBinType(BinId, Token)
+	client.GetBinType(BinId)
+	client.GetBinType(BinId)
 
 	assert.Equal(t, fetches, 2)
 }
@@ -255,14 +214,8 @@ func TestFetchBinTypeOnceWithCache(t *testing.T) {
 	apiSvr := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, `
 			{
-				"item": {
-					"attributes": [
-						{
-							"attributeCode": "attributes_itemsSubtitle",
-							"value": "Garbage sack"
-						}
-					]
-				}
+				"subTitle": "Garbage sack",
+				"binType": "5f96b455e36673006420c529"
 			}
 		`)
 		fetches += 1
@@ -270,10 +223,10 @@ func TestFetchBinTypeOnceWithCache(t *testing.T) {
 	defer apiSvr.Close()
 	apiUrl, _ := url.Parse(apiSvr.URL)
 	cache := expirable.NewLRU[string, interface{}](1024, nil, time.Minute*10)
-	client := client.BinsClient{http.Client{}, nil, apiUrl, nil, cache}
+	client := client.BinsClient{http.Client{}, nil, apiUrl, cache}
 
-	client.GetBinType(BinId, Token)
-	client.GetBinType(BinId, Token)
+	client.GetBinType(BinId)
+	client.GetBinType(BinId)
 
 	assert.Equal(t, fetches, 1)
 }

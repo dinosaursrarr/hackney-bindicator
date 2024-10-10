@@ -58,12 +58,14 @@ func (c BinsClient) GetBinIds(propertyId string) (BinIds, error) {
 
 	var data item
 	json.Unmarshal(body, &data)
+
+	if len(data.Fields.Containers) == 0 {
+		return BinIds{}, errors.New("Bin IDs not found for property")
+	}
+	
 	res := BinIds{
 		Name: tidy(data.AddressSummary),
 		Ids: strings.Split(data.Fields.Containers, ","),
-	}
-	if len(res.Ids) == 0 {
-		return BinIds{}, errors.New("Bin IDs not found for property")
 	}
 	if c.Cache != nil {
 		c.Cache.Add(target, res)

@@ -17,8 +17,8 @@ import (
 )
 
 func TestWrongPostcodeArea(t *testing.T) {
-	client := client.BinsClient{http.Client{}, nil, nil, nil, nil}
-	res, err := client.GetAddresses("EH16 5AY", Token)
+	client := client.BinsClient{http.Client{}, nil, nil, nil}
+	res, err := client.GetAddresses("EH16 5AY")
 
 	assert.Empty(t, res)
 	assert.Contains(t, err.Error(), "must begin with")
@@ -37,10 +37,10 @@ func TestNotPostcode(t *testing.T) {
 		"E8 3üu",
 		"Susan",
 	}
-	client := client.BinsClient{http.Client{}, nil, nil, nil, nil}
+	client := client.BinsClient{http.Client{}, nil, nil, nil}
 
 	for _, test := range tests {
-		res, err := client.GetAddresses(test, Token)
+		res, err := client.GetAddresses(test)
 		assert.Empty(t, res)
 		assert.Contains(t, err.Error(), "Not a valid postcode")
 	}
@@ -48,23 +48,12 @@ func TestNotPostcode(t *testing.T) {
 
 func TestBadUrlForAddresses(t *testing.T) {
 	badUrl, _ := url.Parse("ftp://foo.com")
-	client := client.BinsClient{http.Client{}, nil, badUrl, nil, nil}
+	client := client.BinsClient{http.Client{}, nil, badUrl, nil}
 
-	res, err := client.GetAddresses(Postcode, Token)
+	res, err := client.GetAddresses(Postcode)
 
 	assert.Empty(t, res)
 	assert.Contains(t, err.Error(), "unsupported protocol scheme")
-}
-
-func TestSetAccessTokenGettingAddresses(t *testing.T) {
-	apiSvr := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		assert.Contains(t, r.Header["Authorization"], "Bearer "+Token)
-	}))
-	defer apiSvr.Close()
-	apiUrl, _ := url.Parse(apiSvr.URL)
-	client := client.BinsClient{http.Client{}, nil, apiUrl, nil, nil}
-
-	client.GetAddresses(Postcode, Token)
 }
 
 func TestSetUserAgentGettingAddresses(t *testing.T) {
@@ -73,9 +62,31 @@ func TestSetUserAgentGettingAddresses(t *testing.T) {
 	}))
 	defer apiSvr.Close()
 	apiUrl, _ := url.Parse(apiSvr.URL)
-	client := client.BinsClient{http.Client{}, nil, apiUrl, nil, nil}
+	client := client.BinsClient{http.Client{}, nil, apiUrl, nil}
 
-	client.GetAddresses(Postcode, Token)
+	client.GetAddresses(Postcode)
+}
+
+func TestSetAcceptGettingAddresses(t *testing.T) {
+	apiSvr := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		assert.NotEmpty(t, r.Header["Accept"])
+	}))
+	defer apiSvr.Close()
+	apiUrl, _ := url.Parse(apiSvr.URL)
+	client := client.BinsClient{http.Client{}, nil, apiUrl, nil}
+
+	client.GetAddresses(Postcode)
+}
+
+func TestSetContentTypeGettingAddresses(t *testing.T) {
+	apiSvr := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		assert.NotEmpty(t, r.Header["Content-Type"])
+	}))
+	defer apiSvr.Close()
+	apiUrl, _ := url.Parse(apiSvr.URL)
+	client := client.BinsClient{http.Client{}, nil, apiUrl, nil}
+
+	client.GetAddresses(Postcode)
 }
 
 func TestHttpErrorGettingAddresses(t *testing.T) {
@@ -89,9 +100,9 @@ func TestHttpErrorGettingAddresses(t *testing.T) {
 			},
 		},
 	}
-	client := client.BinsClient{httpClient, nil, apiUrl, nil, nil}
+	client := client.BinsClient{httpClient, nil, apiUrl, nil}
 
-	res, err := client.GetAddresses(Postcode, Token)
+	res, err := client.GetAddresses(Postcode)
 
 	assert.Empty(t, res)
 	assert.Contains(t, err.Error(), "foo")
@@ -103,9 +114,9 @@ func TestBadStatusCodeGettingAddresses(t *testing.T) {
 	}))
 	defer apiSvr.Close()
 	apiUrl, _ := url.Parse(apiSvr.URL)
-	client := client.BinsClient{http.Client{}, nil, apiUrl, nil, nil}
+	client := client.BinsClient{http.Client{}, nil, apiUrl, nil}
 
-	res, err := client.GetAddresses(Postcode, Token)
+	res, err := client.GetAddresses(Postcode)
 
 	assert.Empty(t, res)
 	assert.Contains(t, err.Error(), "Status code 418")
@@ -125,9 +136,9 @@ func TestErrorReadingAddresses(t *testing.T) {
 			},
 		},
 	}
-	client := client.BinsClient{httpClient, nil, apiUrl, nil, nil}
+	client := client.BinsClient{httpClient, nil, apiUrl, nil}
 
-	res, err := client.GetAddresses(Postcode, Token)
+	res, err := client.GetAddresses(Postcode)
 
 	assert.Empty(t, res)
 	assert.Contains(t, err.Error(), "nope")
@@ -137,9 +148,9 @@ func TestNoAddressesReturned(t *testing.T) {
 	apiSvr := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
 	defer apiSvr.Close()
 	apiUrl, _ := url.Parse(apiSvr.URL)
-	client := client.BinsClient{http.Client{}, nil, apiUrl, nil, nil}
+	client := client.BinsClient{http.Client{}, nil, apiUrl, nil}
 
-	res, err := client.GetAddresses(Postcode, Token)
+	res, err := client.GetAddresses(Postcode)
 
 	assert.Empty(t, res)
 	assert.Nil(t, err)
@@ -158,10 +169,10 @@ func TestAcceptPostcodeFormats(t *testing.T) {
 	apiSvr := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
 	defer apiSvr.Close()
 	apiUrl, _ := url.Parse(apiSvr.URL)
-	client := client.BinsClient{http.Client{}, nil, apiUrl, nil, nil}
+	client := client.BinsClient{http.Client{}, nil, apiUrl, nil}
 
 	for _, test := range tests {
-		res, err := client.GetAddresses(test, Token)
+		res, err := client.GetAddresses(test)
 		assert.Empty(t, res)
 		assert.Nil(t, err)
 	}
@@ -171,15 +182,10 @@ func TestSuccessAddresses(t *testing.T) {
 	apiSvr := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, `
 			{
-				"results": [
+				"addressSummaries": [
 					{
-						"itemId": "foo",
-						"attributes": [
-							{
-								"attributeCode": "attributes_itemsTitle",
-								"value": "bar"
-							}
-						]
+						"systemId": "foo",
+						"summary": "  bar  "
 					}
 				]
 			}
@@ -187,9 +193,9 @@ func TestSuccessAddresses(t *testing.T) {
 	}))
 	defer apiSvr.Close()
 	apiUrl, _ := url.Parse(apiSvr.URL)
-	binsClient := client.BinsClient{http.Client{}, nil, apiUrl, nil, nil}
+	binsClient := client.BinsClient{http.Client{}, nil, apiUrl, nil}
 
-	res, err := binsClient.GetAddresses(Postcode, Token)
+	res, err := binsClient.GetAddresses(Postcode)
 
 	expected := client.Address{
 		Id:   "foo",
@@ -203,15 +209,10 @@ func TestSkipEmptyName(t *testing.T) {
 	apiSvr := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, `
 			{
-				"results": [
+				"addressSummaries": [
 					{
-						"itemId": "foo",
-						"attributes": [
-							{
-								"attributeCode": "attributes_itemsTitle",
-								"value": ""
-							}
-						]
+						"systemId": "foo",
+						"summary": "    "
 					}
 				]
 			}
@@ -219,9 +220,9 @@ func TestSkipEmptyName(t *testing.T) {
 	}))
 	defer apiSvr.Close()
 	apiUrl, _ := url.Parse(apiSvr.URL)
-	binsClient := client.BinsClient{http.Client{}, nil, apiUrl, nil, nil}
+	binsClient := client.BinsClient{http.Client{}, nil, apiUrl, nil}
 
-	res, err := binsClient.GetAddresses(Postcode, Token)
+	res, err := binsClient.GetAddresses(Postcode)
 
 	assert.Empty(t, res)
 	assert.Nil(t, err)
@@ -231,15 +232,10 @@ func TestSkipEmptyId(t *testing.T) {
 	apiSvr := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, `
 			{
-				"results": [
+				"addressSummaries": [
 					{
-						"itemId": "",
-						"attributes": [
-							{
-								"attributeCode": "attributes_itemsTitle",
-								"value": "bar"
-							}
-						]
+						"systemId": "",
+						"summary": "  bar  "
 					}
 				]
 			}
@@ -247,9 +243,9 @@ func TestSkipEmptyId(t *testing.T) {
 	}))
 	defer apiSvr.Close()
 	apiUrl, _ := url.Parse(apiSvr.URL)
-	binsClient := client.BinsClient{http.Client{}, nil, apiUrl, nil, nil}
+	binsClient := client.BinsClient{http.Client{}, nil, apiUrl, nil}
 
-	res, err := binsClient.GetAddresses(Postcode, Token)
+	res, err := binsClient.GetAddresses(Postcode)
 
 	assert.Empty(t, res)
 	assert.Nil(t, err)
@@ -261,15 +257,10 @@ func TestSuccessFetchTwiceWithoutCache(t *testing.T) {
 		fetches += 1
 		fmt.Fprintf(w, `
 			{
-				"results": [
+				"addressSummaries": [
 					{
-						"itemId": "foo",
-						"attributes": [
-							{
-								"attributeCode": "attributes_itemsTitle",
-								"value": "bar"
-							}
-						]
+						"systemId": "foo",
+						"summary": "    "
 					}
 				]
 			}
@@ -277,10 +268,10 @@ func TestSuccessFetchTwiceWithoutCache(t *testing.T) {
 	}))
 	defer apiSvr.Close()
 	apiUrl, _ := url.Parse(apiSvr.URL)
-	binsClient := client.BinsClient{http.Client{}, nil, apiUrl, nil, nil}
+	binsClient := client.BinsClient{http.Client{}, nil, apiUrl, nil}
 
-	binsClient.GetAddresses(Postcode, Token)
-	binsClient.GetAddresses(Postcode, Token)
+	binsClient.GetAddresses(Postcode)
+	binsClient.GetAddresses(Postcode)
 
 	assert.Equal(t, fetches, 2)
 }
@@ -291,15 +282,10 @@ func TestSuccessFetchOnceWithCache(t *testing.T) {
 		fetches += 1
 		fmt.Fprintf(w, `
 			{
-				"results": [
+				"addressSummaries": [
 					{
-						"itemId": "foo",
-						"attributes": [
-							{
-								"attributeCode": "attributes_itemsTitle",
-								"value": "bar"
-							}
-						]
+						"systemId": "foo",
+						"summary": "    "
 					}
 				]
 			}
@@ -308,10 +294,10 @@ func TestSuccessFetchOnceWithCache(t *testing.T) {
 	defer apiSvr.Close()
 	apiUrl, _ := url.Parse(apiSvr.URL)
 	cache := expirable.NewLRU[string, interface{}](1024, nil, time.Minute*10)
-	binsClient := client.BinsClient{http.Client{}, nil, apiUrl, nil, cache}
+	binsClient := client.BinsClient{http.Client{}, nil, apiUrl, cache}
 
-	binsClient.GetAddresses(Postcode, Token)
-	binsClient.GetAddresses(Postcode, Token)
+	binsClient.GetAddresses(Postcode)
+	binsClient.GetAddresses(Postcode)
 
 	assert.Equal(t, fetches, 1)
 }
@@ -320,60 +306,30 @@ func TestSortByName(t *testing.T) {
 	apiSvr := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, `
 			{
-				"results": [
+				"addressSummaries": [
 					{
-						"itemId": "1",
-						"attributes": [
-							{
-								"attributeCode": "attributes_itemsTitle",
-								"value": "bar"
-							}
-						]
+						"systemId": "1",
+						"summary": "bar"
 					},
 					{
-						"itemId": "2",
-						"attributes": [
-							{
-								"attributeCode": "attributes_itemsTitle",
-								"value": "aaa"
-							}
-						]
+						"systemId": "2",
+						"summary": "aaa"
 					},
 					{
-						"itemId": "3",
-						"attributes": [
-							{
-								"attributeCode": "attributes_itemsTitle",
-								"value": "ba r"
-							}
-						]
+						"systemId": "3",
+						"summary": "ba r"
 					},
 					{
-						"itemId": "4",
-						"attributes": [
-							{
-								"attributeCode": "attributes_itemsTitle",
-								"value": "10 Smith Road"
-							}
-						]
+						"systemId": "4",
+						"summary": "10 Smith Road"
 					},
 					{
-						"itemId": "5",
-						"attributes": [
-							{
-								"attributeCode": "attributes_itemsTitle",
-								"value": "9 Smith Road"
-							}
-						]
+						"systemId": "5",
+						"summary": "9 Smith Road"
 					},
 					{
-						"itemId": "6",
-						"attributes": [
-							{
-								"attributeCode": "attributes_itemsTitle",
-								"value": "1 Smith Road"
-							}
-						]
+						"systemId": "6",
+						"summary": "1 Smith Road"
 					}
 				]
 			}
@@ -381,9 +337,9 @@ func TestSortByName(t *testing.T) {
 	}))
 	defer apiSvr.Close()
 	apiUrl, _ := url.Parse(apiSvr.URL)
-	binsClient := client.BinsClient{http.Client{}, nil, apiUrl, nil, nil}
+	binsClient := client.BinsClient{http.Client{}, nil, apiUrl, nil}
 
-	res, err := binsClient.GetAddresses(Postcode, Token)
+	res, err := binsClient.GetAddresses(Postcode)
 
 	expected := []client.Address{
 		client.Address{

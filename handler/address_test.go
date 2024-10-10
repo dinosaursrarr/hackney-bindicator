@@ -20,15 +20,10 @@ const Postcode = "E8 1EA" // Hackney Town Hall
 
 const AddressJsonResponse = `
 	{
-		"results": [
+		"addressSummaries": [
 			{
-				"itemId": "foo",
-				"attributes": [
-					{
-						"attributeCode": "attributes_itemsTitle",
-						"value": "bar"
-					}
-				]
+				"systemId": "foo",
+				"summary": "bar"
 			}
 		]
 	}
@@ -43,7 +38,7 @@ func TestNoPostcode(t *testing.T) {
 	r = mux.SetURLVars(r, vars)
 	httpClient := http.Client{}
 	clock := clockwork.NewFakeClock()
-	client := client.BinsClient{httpClient, clock, &url.URL{}, &url.URL{}, nil}
+	client := client.BinsClient{httpClient, clock, &url.URL{}, nil}
 	handler := handler.AddressHandler{client, nil}
 
 	handler.Handle(w, r)
@@ -52,33 +47,7 @@ func TestNoPostcode(t *testing.T) {
 	assert.Contains(t, w.Body.String(), "include postcode")
 }
 
-func TestAddressCannotGetAccessToken(t *testing.T) {
-	startSvr := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		http.Error(w, "No access token", http.StatusTeapot)
-	}))
-	startUrl, _ := url.Parse(startSvr.URL)
-	r, _ := http.NewRequest(http.MethodGet, RequestUrl, nil)
-	w := httptest.NewRecorder()
-	vars := map[string]string{
-		"postcode": Postcode,
-	}
-	r = mux.SetURLVars(r, vars)
-	httpClient := http.Client{}
-	clock := clockwork.NewFakeClock()
-	client := client.BinsClient{httpClient, clock, &url.URL{}, startUrl, nil}
-	handler := handler.AddressHandler{client, nil}
-
-	handler.Handle(w, r)
-
-	assert.Equal(t, w.Code, http.StatusInternalServerError)
-	assert.Contains(t, w.Body.String(), "fetching access token")
-}
-
 func TestNonHackneyPostcode(t *testing.T) {
-	startSvr := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintf(w, StartPage)
-	}))
-	startUrl, _ := url.Parse(startSvr.URL)
 	r, _ := http.NewRequest(http.MethodGet, RequestUrl, nil)
 	w := httptest.NewRecorder()
 	vars := map[string]string{
@@ -87,7 +56,7 @@ func TestNonHackneyPostcode(t *testing.T) {
 	r = mux.SetURLVars(r, vars)
 	httpClient := http.Client{}
 	clock := clockwork.NewFakeClock()
-	client := client.BinsClient{httpClient, clock, &url.URL{}, startUrl, nil}
+	client := client.BinsClient{httpClient, clock, &url.URL{}, nil}
 	handler := handler.AddressHandler{client, nil}
 
 	handler.Handle(w, r)
@@ -97,10 +66,6 @@ func TestNonHackneyPostcode(t *testing.T) {
 }
 
 func TestInvalidPostcode(t *testing.T) {
-	startSvr := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintf(w, StartPage)
-	}))
-	startUrl, _ := url.Parse(startSvr.URL)
 	r, _ := http.NewRequest(http.MethodGet, RequestUrl, nil)
 	w := httptest.NewRecorder()
 	vars := map[string]string{
@@ -109,7 +74,7 @@ func TestInvalidPostcode(t *testing.T) {
 	r = mux.SetURLVars(r, vars)
 	httpClient := http.Client{}
 	clock := clockwork.NewFakeClock()
-	client := client.BinsClient{httpClient, clock, &url.URL{}, startUrl, nil}
+	client := client.BinsClient{httpClient, clock, &url.URL{}, nil}
 	handler := handler.AddressHandler{client, nil}
 
 	handler.Handle(w, r)
@@ -119,10 +84,6 @@ func TestInvalidPostcode(t *testing.T) {
 }
 
 func TestOtherErrorGettingAddresses(t *testing.T) {
-	startSvr := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintf(w, StartPage)
-	}))
-	startUrl, _ := url.Parse(startSvr.URL)
 	apiSvr := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "nope", http.StatusBadRequest)
 	}))
@@ -136,7 +97,7 @@ func TestOtherErrorGettingAddresses(t *testing.T) {
 	r = mux.SetURLVars(r, vars)
 	httpClient := http.Client{}
 	clock := clockwork.NewFakeClock()
-	client := client.BinsClient{httpClient, clock, apiUrl, startUrl, nil}
+	client := client.BinsClient{httpClient, clock, apiUrl, nil}
 	handler := handler.AddressHandler{client, nil}
 
 	handler.Handle(w, r)
@@ -146,10 +107,6 @@ func TestOtherErrorGettingAddresses(t *testing.T) {
 }
 
 func TestSuccess(t *testing.T) {
-	startSvr := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintf(w, StartPage)
-	}))
-	startUrl, _ := url.Parse(startSvr.URL)
 	apiSvr := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, AddressJsonResponse)
 	}))
@@ -163,7 +120,7 @@ func TestSuccess(t *testing.T) {
 	r = mux.SetURLVars(r, vars)
 	httpClient := http.Client{}
 	clock := clockwork.NewFakeClock()
-	client := client.BinsClient{httpClient, clock, apiUrl, startUrl, nil}
+	client := client.BinsClient{httpClient, clock, apiUrl, nil}
 	handler := handler.AddressHandler{client, nil}
 
 	handler.Handle(w, r)
@@ -180,10 +137,6 @@ func TestSuccess(t *testing.T) {
 }
 
 func TestFetchAddressesTwiceWithoutCache(t *testing.T) {
-	startSvr := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintf(w, StartPage)
-	}))
-	startUrl, _ := url.Parse(startSvr.URL)
 	fetches := 0
 	apiSvr := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		fetches += 1
@@ -202,7 +155,7 @@ func TestFetchAddressesTwiceWithoutCache(t *testing.T) {
 	r2 = mux.SetURLVars(r2, vars)
 	httpClient := http.Client{}
 	clock := clockwork.NewFakeClock()
-	client := client.BinsClient{httpClient, clock, apiUrl, startUrl, nil}
+	client := client.BinsClient{httpClient, clock, apiUrl, nil}
 	handler := handler.AddressHandler{client, nil}
 
 	handler.Handle(w1, r1)
@@ -212,10 +165,6 @@ func TestFetchAddressesTwiceWithoutCache(t *testing.T) {
 }
 
 func TestFetchAddressesOnceWithCache(t *testing.T) {
-	startSvr := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintf(w, StartPage)
-	}))
-	startUrl, _ := url.Parse(startSvr.URL)
 	fetches := 0
 	apiSvr := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		fetches += 1
@@ -234,7 +183,7 @@ func TestFetchAddressesOnceWithCache(t *testing.T) {
 	r2 = mux.SetURLVars(r2, vars)
 	httpClient := http.Client{}
 	clock := clockwork.NewFakeClock()
-	client := client.BinsClient{httpClient, clock, apiUrl, startUrl, nil}
+	client := client.BinsClient{httpClient, clock, apiUrl, nil}
 	cache := expirable.NewLRU[string, interface{}](1024, nil, time.Minute*10)
 	handler := handler.AddressHandler{client, cache}
 

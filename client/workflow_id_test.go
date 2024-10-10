@@ -18,23 +18,12 @@ import (
 
 func TestBadWorkflowIdUrl(t *testing.T) {
 	badUrl, _ := url.Parse("ftp://foo.bar")
-	client := client.BinsClient{http.Client{}, nil, badUrl, nil, nil}
+	client := client.BinsClient{http.Client{}, nil, badUrl, nil}
 
-	res, err := client.GetBinWorkflowId(BinId, Token)
+	res, err := client.GetBinWorkflowId(BinId)
 
 	assert.Empty(t, res)
 	assert.Contains(t, err.Error(), "unsupported protocol scheme")
-}
-
-func TestSetAccessTokenGettingWorkflowId(t *testing.T) {
-	apiSvr := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		assert.Contains(t, r.Header["Authorization"], "Bearer "+Token)
-	}))
-	defer apiSvr.Close()
-	apiUrl, _ := url.Parse(apiSvr.URL)
-	client := client.BinsClient{http.Client{}, nil, apiUrl, nil, nil}
-
-	client.GetBinWorkflowId(BinId, Token)
 }
 
 func TestSetUserAgentGettingWorkflowId(t *testing.T) {
@@ -43,9 +32,20 @@ func TestSetUserAgentGettingWorkflowId(t *testing.T) {
 	}))
 	defer apiSvr.Close()
 	apiUrl, _ := url.Parse(apiSvr.URL)
-	client := client.BinsClient{http.Client{}, nil, apiUrl, nil, nil}
+	client := client.BinsClient{http.Client{}, nil, apiUrl, nil}
 
-	client.GetBinWorkflowId(BinId, Token)
+	client.GetBinWorkflowId(BinId)
+}
+
+func TestSetAcceptGettingWorkflowId(t *testing.T) {
+	apiSvr := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		assert.NotEmpty(t, r.Header["Accept"])
+	}))
+	defer apiSvr.Close()
+	apiUrl, _ := url.Parse(apiSvr.URL)
+	client := client.BinsClient{http.Client{}, nil, apiUrl, nil}
+
+	client.GetBinWorkflowId(BinId)
 }
 
 func TestHttpErrorGettingWorkflowId(t *testing.T) {
@@ -59,9 +59,9 @@ func TestHttpErrorGettingWorkflowId(t *testing.T) {
 			},
 		},
 	}
-	client := client.BinsClient{httpClient, nil, apiUrl, nil, nil}
+	client := client.BinsClient{httpClient, nil, apiUrl, nil}
 
-	res, err := client.GetBinWorkflowId(BinId, Token)
+	res, err := client.GetBinWorkflowId(BinId)
 
 	assert.Empty(t, res)
 	assert.Contains(t, err.Error(), "foo")
@@ -73,9 +73,9 @@ func TestBadStatusCodeGettingWorkflowId(t *testing.T) {
 	}))
 	defer apiSvr.Close()
 	apiUrl, _ := url.Parse(apiSvr.URL)
-	client := client.BinsClient{http.Client{}, nil, apiUrl, nil, nil}
+	client := client.BinsClient{http.Client{}, nil, apiUrl, nil}
 
-	res, err := client.GetBinWorkflowId(BinId, Token)
+	res, err := client.GetBinWorkflowId(BinId)
 
 	assert.Empty(t, res)
 	assert.Contains(t, err.Error(), "Status code 418")
@@ -95,9 +95,9 @@ func TestErrorReadingWorkflowId(t *testing.T) {
 			},
 		},
 	}
-	client := client.BinsClient{httpClient, nil, apiUrl, nil, nil}
+	client := client.BinsClient{httpClient, nil, apiUrl, nil}
 
-	res, err := client.GetBinWorkflowId(BinId, Token)
+	res, err := client.GetBinWorkflowId(BinId)
 
 	assert.Empty(t, res)
 	assert.Contains(t, err.Error(), "nope")
@@ -107,9 +107,9 @@ func TestWorkflowIdNotFound(t *testing.T) {
 	apiSvr := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
 	defer apiSvr.Close()
 	apiUrl, _ := url.Parse(apiSvr.URL)
-	client := client.BinsClient{http.Client{}, nil, apiUrl, nil, nil}
+	client := client.BinsClient{http.Client{}, nil, apiUrl, nil}
 
-	res, err := client.GetBinWorkflowId(BinId, Token)
+	res, err := client.GetBinWorkflowId(BinId)
 
 	assert.Empty(t, res)
 	assert.Contains(t, err.Error(), "Workflow ID not found")
@@ -119,51 +119,33 @@ func TestEmptyWorkflowIdFound(t *testing.T) {
 	apiSvr := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, `
 			{
-				"results": [
-					{
-						"attributes": [
-							{
-								"attributeCode": "attributes_scheduleCodeWorkflowID_5f8dbfdce27d98006789b4ec",
-								"value": ""
-							}
-						]
-					}
-				]
+				"scheduleCodeWorkflowID": ""
 			}
 		`)
 	}))
 	defer apiSvr.Close()
 	apiUrl, _ := url.Parse(apiSvr.URL)
-	client := client.BinsClient{http.Client{}, nil, apiUrl, nil, nil}
+	client := client.BinsClient{http.Client{}, nil, apiUrl, nil}
 
-	res, err := client.GetBinWorkflowId(BinId, Token)
+	res, err := client.GetBinWorkflowId(BinId)
 
 	assert.Empty(t, res)
-	assert.Nil(t, err)
+	assert.Contains(t, err.Error(), "Workflow ID not found")
 }
 
 func TestSuccessWorkflowId(t *testing.T) {
 	apiSvr := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, `
 			{
-				"results": [
-					{
-						"attributes": [
-							{
-								"attributeCode": "attributes_scheduleCodeWorkflowID_5f8dbfdce27d98006789b4ec",
-								"value": "foo"
-							}
-						]
-					}
-				]
+				"scheduleCodeWorkflowID": "foo"
 			}
 		`)
 	}))
 	defer apiSvr.Close()
 	apiUrl, _ := url.Parse(apiSvr.URL)
-	client := client.BinsClient{http.Client{}, nil, apiUrl, nil, nil}
+	client := client.BinsClient{http.Client{}, nil, apiUrl, nil}
 
-	res, err := client.GetBinWorkflowId(BinId, Token)
+	res, err := client.GetBinWorkflowId(BinId)
 
 	assert.Equal(t, res, "foo")
 	assert.Nil(t, err)
@@ -174,26 +156,17 @@ func TestFetchWorkflowIdTwiceWithoutCache(t *testing.T) {
 	apiSvr := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, `
 			{
-				"results": [
-					{
-						"attributes": [
-							{
-								"attributeCode": "attributes_scheduleCodeWorkflowID_5f8dbfdce27d98006789b4ec",
-								"value": "foo"
-							}
-						]
-					}
-				]
+				"scheduleCodeWorkflowID": "foo"
 			}
 		`)
 		fetches += 1
 	}))
 	defer apiSvr.Close()
 	apiUrl, _ := url.Parse(apiSvr.URL)
-	client := client.BinsClient{http.Client{}, nil, apiUrl, nil, nil}
+	client := client.BinsClient{http.Client{}, nil, apiUrl, nil}
 
-	client.GetBinWorkflowId(BinId, Token)
-	client.GetBinWorkflowId(BinId, Token)
+	client.GetBinWorkflowId(BinId)
+	client.GetBinWorkflowId(BinId)
 
 	assert.Equal(t, fetches, 2)
 }
@@ -203,16 +176,7 @@ func TestFetchWorkflowIdOnceWithCache(t *testing.T) {
 	apiSvr := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, `
 			{
-				"results": [
-					{
-						"attributes": [
-							{
-								"attributeCode": "attributes_scheduleCodeWorkflowID_5f8dbfdce27d98006789b4ec",
-								"value": "foo"
-							}
-						]
-					}
-				]
+				"scheduleCodeWorkflowID": "foo"
 			}
 		`)
 		fetches += 1
@@ -220,10 +184,10 @@ func TestFetchWorkflowIdOnceWithCache(t *testing.T) {
 	defer apiSvr.Close()
 	apiUrl, _ := url.Parse(apiSvr.URL)
 	cache := expirable.NewLRU[string, interface{}](1024, nil, time.Minute*10)
-	client := client.BinsClient{http.Client{}, nil, apiUrl, nil, cache}
+	client := client.BinsClient{http.Client{}, nil, apiUrl, cache}
 
-	client.GetBinWorkflowId(BinId, Token)
-	client.GetBinWorkflowId(BinId, Token)
+	client.GetBinWorkflowId(BinId)
+	client.GetBinWorkflowId(BinId)
 
 	assert.Equal(t, fetches, 1)
 }

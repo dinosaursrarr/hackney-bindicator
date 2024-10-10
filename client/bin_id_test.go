@@ -18,23 +18,12 @@ import (
 
 func TestBadBinIdUrl(t *testing.T) {
 	badUrl, _ := url.Parse("ftp://foo.bar")
-	client := client.BinsClient{http.Client{}, nil, badUrl, nil, nil}
+	client := client.BinsClient{http.Client{}, nil, badUrl, nil}
 
-	res, err := client.GetBinIds(PropertyId, Token)
+	res, err := client.GetBinIds(PropertyId)
 
 	assert.Empty(t, res)
 	assert.Contains(t, err.Error(), "unsupported protocol scheme")
-}
-
-func TestSetAccessTokenGettingBinIds(t *testing.T) {
-	apiSvr := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		assert.Contains(t, r.Header["Authorization"], "Bearer "+Token)
-	}))
-	defer apiSvr.Close()
-	apiUrl, _ := url.Parse(apiSvr.URL)
-	client := client.BinsClient{http.Client{}, nil, apiUrl, nil, nil}
-
-	client.GetBinIds(PropertyId, Token)
 }
 
 func TestSetUserAgentGettingBinIds(t *testing.T) {
@@ -43,9 +32,20 @@ func TestSetUserAgentGettingBinIds(t *testing.T) {
 	}))
 	defer apiSvr.Close()
 	apiUrl, _ := url.Parse(apiSvr.URL)
-	client := client.BinsClient{http.Client{}, nil, apiUrl, nil, nil}
+	client := client.BinsClient{http.Client{}, nil, apiUrl, nil}
 
-	client.GetBinIds(PropertyId, Token)
+	client.GetBinIds(PropertyId)
+}
+
+func TestSetAcceptGettingBinIds(t *testing.T) {
+	apiSvr := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		assert.NotEmpty(t, r.Header["Accept"])
+	}))
+	defer apiSvr.Close()
+	apiUrl, _ := url.Parse(apiSvr.URL)
+	client := client.BinsClient{http.Client{}, nil, apiUrl, nil}
+
+	client.GetBinIds(PropertyId)
 }
 
 func TestHttpErrorGettingBinIds(t *testing.T) {
@@ -59,9 +59,9 @@ func TestHttpErrorGettingBinIds(t *testing.T) {
 			},
 		},
 	}
-	client := client.BinsClient{httpClient, nil, apiUrl, nil, nil}
+	client := client.BinsClient{httpClient, nil, apiUrl, nil}
 
-	res, err := client.GetBinIds(PropertyId, Token)
+	res, err := client.GetBinIds(PropertyId)
 
 	assert.Empty(t, res)
 	assert.Contains(t, err.Error(), "foo")
@@ -73,9 +73,9 @@ func TestStatusCode400GettingBinIds(t *testing.T) {
 	}))
 	defer apiSvr.Close()
 	apiUrl, _ := url.Parse(apiSvr.URL)
-	client := client.BinsClient{http.Client{}, nil, apiUrl, nil, nil}
+	client := client.BinsClient{http.Client{}, nil, apiUrl, nil}
 
-	res, err := client.GetBinIds(PropertyId, Token)
+	res, err := client.GetBinIds(PropertyId)
 
 	assert.Empty(t, res)
 	assert.Contains(t, err.Error(), "Status code 400")
@@ -87,9 +87,9 @@ func TestBadStatusCodeGettingBinIds(t *testing.T) {
 	}))
 	defer apiSvr.Close()
 	apiUrl, _ := url.Parse(apiSvr.URL)
-	client := client.BinsClient{http.Client{}, nil, apiUrl, nil, nil}
+	client := client.BinsClient{http.Client{}, nil, apiUrl, nil}
 
-	res, err := client.GetBinIds(PropertyId, Token)
+	res, err := client.GetBinIds(PropertyId)
 
 	assert.Empty(t, res)
 	assert.Contains(t, err.Error(), "Status code 418")
@@ -109,9 +109,9 @@ func TestErrorReadingBinIds(t *testing.T) {
 			},
 		},
 	}
-	client := client.BinsClient{httpClient, nil, apiUrl, nil, nil}
+	client := client.BinsClient{httpClient, nil, apiUrl, nil}
 
-	res, err := client.GetBinIds(PropertyId, Token)
+	res, err := client.GetBinIds(PropertyId)
 
 	assert.Empty(t, res)
 	assert.Contains(t, err.Error(), "nope")
@@ -121,9 +121,9 @@ func TestBinIdsNotFound(t *testing.T) {
 	apiSvr := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
 	defer apiSvr.Close()
 	apiUrl, _ := url.Parse(apiSvr.URL)
-	client := client.BinsClient{http.Client{}, nil, apiUrl, nil, nil}
+	client := client.BinsClient{http.Client{}, nil, apiUrl, nil}
 
-	res, err := client.GetBinIds(PropertyId, Token)
+	res, err := client.GetBinIds(PropertyId)
 
 	assert.Empty(t, res)
 	assert.Contains(t, err.Error(), "Bin IDs not found")
@@ -133,26 +133,18 @@ func TestNoBinIdsFound(t *testing.T) {
 	apiSvr := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, `
 			{
-				"item": {
-					"attributes": [
-						{
-							"attributeCode": "attributes_wasteContainersAssignableWasteContainers",
-							"value": []
-						},
-						{
-							"attributeCode": "attributes_itemsTitle",
-							"value": "foo"
-						}
-					]
+				"addressSummary": "foo",
+				"providerSpecificFields": {
+					"attributes_wasteContainersAssignableWasteContainers": ""
 				}
 			}
 		`)
 	}))
 	defer apiSvr.Close()
 	apiUrl, _ := url.Parse(apiSvr.URL)
-	binsClient := client.BinsClient{http.Client{}, nil, apiUrl, nil, nil}
+	binsClient := client.BinsClient{http.Client{}, nil, apiUrl, nil}
 
-	res, err := binsClient.GetBinIds(PropertyId, Token)
+	res, err := binsClient.GetBinIds(PropertyId)
 
 	assert.Empty(t, res)
 	assert.Contains(t, err.Error(), "Bin IDs not found")
@@ -162,30 +154,18 @@ func TestSuccessBinIds(t *testing.T) {
 	apiSvr := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, `
 			{
-				"item": {
-					"attributes": [
-						{
-							"attributeCode": "attributes_wasteContainersAssignableWasteContainers",
-							"value": [
-								"foo",
-								"bar",
-								"baz"
-							]
-						},
-						{
-							"attributeCode": "attributes_itemsTitle",
-							"value": "foo"
-						}
-					]
+				"addressSummary": "foo",
+				"providerSpecificFields": {
+					"attributes_wasteContainersAssignableWasteContainers": "foo,bar,baz"
 				}
 			}
 		`)
 	}))
 	defer apiSvr.Close()
 	apiUrl, _ := url.Parse(apiSvr.URL)
-	binsClient := client.BinsClient{http.Client{}, nil, apiUrl, nil, nil}
+	binsClient := client.BinsClient{http.Client{}, nil, apiUrl, nil}
 
-	res, err := binsClient.GetBinIds(PropertyId, Token)
+	res, err := binsClient.GetBinIds(PropertyId)
 
 	assert.Equal(t, res, client.BinIds{
 		Name: "foo",
@@ -199,17 +179,9 @@ func TestFetchBinIdsTwiceWithoutCache(t *testing.T) {
 	apiSvr := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, `
 			{
-				"item": {
-					"attributes": [
-						{
-							"attributeCode": "attributes_wasteContainersAssignableWasteContainers",
-							"value": [
-								"foo",
-								"bar",
-								"baz"
-							]
-						}
-					]
+				"addressSummary": "foo",
+				"providerSpecificFields": {
+					"attributes_wasteContainersAssignableWasteContainers": "foo,bar,baz"
 				}
 			}
 		`)
@@ -217,10 +189,10 @@ func TestFetchBinIdsTwiceWithoutCache(t *testing.T) {
 	}))
 	defer apiSvr.Close()
 	apiUrl, _ := url.Parse(apiSvr.URL)
-	client := client.BinsClient{http.Client{}, nil, apiUrl, nil, nil}
+	client := client.BinsClient{http.Client{}, nil, apiUrl, nil}
 
-	client.GetBinIds(PropertyId, Token)
-	client.GetBinIds(PropertyId, Token)
+	client.GetBinIds(PropertyId)
+	client.GetBinIds(PropertyId)
 
 	assert.Equal(t, fetches, 2)
 }
@@ -230,17 +202,9 @@ func TestFetchBinIdsOnceWithCache(t *testing.T) {
 	apiSvr := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, `
 			{
-				"item": {
-					"attributes": [
-						{
-							"attributeCode": "attributes_wasteContainersAssignableWasteContainers",
-							"value": [
-								"foo",
-								"bar",
-								"baz"
-							]
-						}
-					]
+				"addressSummary": "foo",
+				"providerSpecificFields": {
+					"attributes_wasteContainersAssignableWasteContainers": "foo,bar,baz"
 				}
 			}
 		`)
@@ -249,10 +213,10 @@ func TestFetchBinIdsOnceWithCache(t *testing.T) {
 	defer apiSvr.Close()
 	apiUrl, _ := url.Parse(apiSvr.URL)
 	cache := expirable.NewLRU[string, interface{}](1024, nil, time.Minute*10)
-	client := client.BinsClient{http.Client{}, nil, apiUrl, nil, cache}
+	client := client.BinsClient{http.Client{}, nil, apiUrl, cache}
 
-	client.GetBinIds(PropertyId, Token)
-	client.GetBinIds(PropertyId, Token)
+	client.GetBinIds(PropertyId)
+	client.GetBinIds(PropertyId)
 
 	assert.Equal(t, fetches, 1)
 }
