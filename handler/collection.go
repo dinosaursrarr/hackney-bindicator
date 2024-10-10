@@ -34,13 +34,7 @@ func (h *CollectionHandler) Handle(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	token, err := h.Client.GetAccessToken()
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	binIds, err := h.Client.GetBinIds(propertyId, token)
+	binIds, err := h.Client.GetBinIds(propertyId)
 	if err != nil {
 		if err == client.ErrBadPropertyId {
 			http.Error(w, err.Error(), http.StatusBadRequest)
@@ -59,7 +53,7 @@ func (h *CollectionHandler) Handle(w http.ResponseWriter, r *http.Request) {
 		i := i
 		binId := binId
 		g.Go(func() error {
-			binType, err := h.Client.GetBinType(binId, token)
+			binType, err := h.Client.GetBinType(binId)
 			if err != nil {
 				return err
 			}
@@ -67,7 +61,7 @@ func (h *CollectionHandler) Handle(w http.ResponseWriter, r *http.Request) {
 			return nil
 		})
 		g.Go(func() error {
-			workflowId, err := h.Client.GetBinWorkflowId(binId, token)
+			workflowId, err := h.Client.GetBinWorkflowId(binId)
 			if err != nil {
 				return err
 			}
@@ -77,7 +71,7 @@ func (h *CollectionHandler) Handle(w http.ResponseWriter, r *http.Request) {
 				return nil
 			}
 			schedulesStarted.Store(workflowId, true)
-			schedule, err := h.Client.GetWorkflowSchedule(workflowId, token)
+			schedule, err := h.Client.GetWorkflowSchedule(workflowId)
 			if err != nil {
 				return err
 			}

@@ -9,7 +9,6 @@ import (
 	"net/http"
 	"regexp"
 	"slices"
-	"strconv"
 	"strings"
 
 	"facette.io/natsort"
@@ -53,68 +52,24 @@ func canonicalize(s string) (string, error) {
 	return postcode.ReplaceAllString(tidy, "${outer} ${inner}"), nil
 }
 
-func (c BinsClient) GetAddresses(postcode, token string) ([]Address, error) {
+func (c BinsClient) GetAddresses(postcode string) ([]Address, error) {
 	canonical, err := canonicalize(postcode)
 	if err != nil {
 		return []Address{}, err
 	}
 	reqBody := []byte(`{
-	    "type": "Query",
-	    "aqs":
-	    {
-	        "properties":
-	        {
-	            "dodiCode": "designs_nlpgPremises",
-	            "collectionCode": "Live",
-	            "attributes":
-	            [
-	                "attributes_itemsTitle"
-	            ]
-	        },
-	        "children":
-	        [
-	            {
-	                "type": "Equals",
-	                "properties":
-	                {
-	                    "__dataExplorerFilter": "attributes_premisesPostcode"
-	                },
-	                "children":
-	                [
-	                    {
-	                        "type": "Attribute",
-	                        "properties":
-	                        {
-	                            "attributeCode": "attributes_premisesPostcode",
-	                            "value":
-	                            []
-	                        },
-	                        "children":
-	                        []
-	                    },
-	                    {
-	                        "type": "String",
-	                        "properties":
-	                        {
-	                            "attributeCode": "",
-	                            "value":
-	                            [
-	                                "` + canonical + `"
-	                            ]
-	                        },
-	                        "children":
-	                        []
-	                    }
-	                ]
-	            }
-	        ]
-	    }
+		"Postcode": "` + canonical + `",
+		"Filters":
+		[
+			{
+				"Filter": "attributes_premisesBlpuClass",
+				"Include": true,
+				"StringMatch": "Prefix",
+				"Value": "R"
+			}
+		]
 	}`)
-	target := c.ApiHost.JoinPath(queryUrl)
-	query := target.Query()
-	query.Set("pageSize", strconv.Itoa(100))
-	query.Set("page", strconv.Itoa(1))
-	target.RawQuery = query.Encode()
+	target := c.ApiHost.JoinPath(addressUrl)
 
 	cacheKey := target.JoinPath(canonical).String()
 	if c.Cache != nil {
@@ -127,9 +82,9 @@ func (c BinsClient) GetAddresses(postcode, token string) ([]Address, error) {
 	if err != nil {
 		return []Address{}, err
 	}
-	req.Header.Add("Authorization", fmt.Sprint("Bearer ", token))
 	req.Header.Add("Content-Type", "application/json")
 	req.Header.Add("User-Agent", userAgent)
+	req.Header.Add("Accept", "application/json")
 
 	resp, err := c.HttpClient.Do(req)
 	if err != nil {
@@ -144,34 +99,27 @@ func (c BinsClient) GetAddresses(postcode, token string) ([]Address, error) {
 	}
 
 	type result struct {
-		Results []struct {
-			ItemId     string `json:"itemId"`
-			Attributes []struct {
-				AttributeCode string `json:"attributeCode"`
-				Value         string `json:"value"`
-			} `json:"attributes"`
-		} `json:"results"`
+		AddressSummaries []struct {
+			Summary     string `json:"summary"`
+			SystemId	string `json:"systemId"`
+		} `json:"addressSummaries"`
 	}
 
 	var data result
 	json.Unmarshal(respBody, &data)
 
 	var addresses []Address
-	for _, res := range data.Results {
-		var name string
-		for _, attribute := range res.Attributes {
-			if attribute.AttributeCode == "attributes_itemsTitle" {
-				name = tidy(attribute.Value)
-				continue
-			}
+	for _, addressSummary := range data.AddressSummaries {
+		location := tidy(addressSummary.Summary)
+		systemID := tidy(addressSummary.SystemId)
+		if location == "" || systemID == "" {
+			continue
 		}
-		if res.ItemId != "" && name != "" {
-			address := Address{
-				res.ItemId,
-				name,
-			}
-			addresses = append(addresses, address)
+		address := Address{
+			Id: systemID,
+			Name: location,
 		}
+		addresses = append(addresses, address)
 	}
 
 	slices.SortFunc(addresses, func(a, b Address) int {

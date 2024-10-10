@@ -1,7 +1,6 @@
 package client
 
 import (
-	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -9,56 +8,20 @@ import (
 	"net/http"
 )
 
-func (c BinsClient) GetBinWorkflowId(binId, token string) (string, error) {
-	reqBody := []byte(`{
-        "type": "Query",
-        "aqs": {
-            "properties": {
-                "dodiCode": "designs_scheduleCode_5f8d5eac8dae040066c53c8c",
-                "attributes": [
-                    "attributes_scheduleCodeWorkflowID_5f8dbfdce27d98006789b4ec",
-                ],
-            },
-            "children": [
-                {
-                    "type": "Equals",
-                    "children": [
-                        {
-                            "type": "Attribute",
-                            "properties": {
-                                "attributeCode": "attributes_assetGroupsAssets",
-                                "path": "root^Template:attributes_wasteRoundsScheduleCode_5f8de8de8dae040066c59dae.Template:attributes_projectsTasks^Live:attributes_tasksAssignableTasks<designInterfaces_assetGroups>",
-                                "value": [],
-                            },
-                        },
-                        {
-                            "type": "AlloyId",
-                            "properties": {
-                                "value": [
-                                    "` + binId + `",
-                                ],
-                            },
-                        },
-                    ],
-                },
-            ],
-        },
-    }`)
-	target := c.ApiHost.JoinPath(queryUrl)
+func (c BinsClient) GetBinWorkflowId(binId string) (string, error) {
+	target := c.ApiHost.JoinPath(workflowIdUrl, binId).String()
 
-	cacheKey := target.JoinPath(binId).String()
 	if c.Cache != nil {
-		if res, found := c.Cache.Get(cacheKey); found {
+		if res, found := c.Cache.Get(target); found {
 			return res.(string), nil
 		}
 	}
 
-	req, err := http.NewRequest(http.MethodPost, target.String(), bytes.NewBuffer(reqBody))
+	req, err := http.NewRequest(http.MethodGet, target, nil)
 	if err != nil {
 		return "", err
 	}
-	req.Header.Add("Authorization", fmt.Sprint("Bearer ", token))
-	req.Header.Add("Content-Type", "application/json")
+	req.Header.Add("Accept", "application/json")
 	req.Header.Add("User-Agent", userAgent)
 
 	resp, err := c.HttpClient.Do(req)
@@ -74,28 +37,18 @@ func (c BinsClient) GetBinWorkflowId(binId, token string) (string, error) {
 	}
 
 	type result struct {
-		Results []struct {
-			Attributes []struct {
-				AttributeCode string `json:"attributeCode"`
-				Value         string `json:"value"`
-			} `json:"attributes"`
-		} `json:"results"`
+		ID string `json:"scheduleCodeWorkflowID"`
 	}
 
 	var data result
 	json.Unmarshal(respBody, &data)
-	for _, res := range data.Results {
-		for _, attribute := range res.Attributes {
-			if attribute.AttributeCode != "attributes_scheduleCodeWorkflowID_5f8dbfdce27d98006789b4ec" {
-				continue
-			}
-
-			if c.Cache != nil {
-				c.Cache.Add(cacheKey, attribute.Value)
-			}
-
-			return attribute.Value, nil
-		}
+	
+	if data.ID == "" {
+		return "", errors.New("Workflow ID not found")
 	}
-	return "", errors.New("Workflow ID not found")
+
+	if c.Cache != nil {
+		c.Cache.Add(target, data.ID)
+	}
+	return data.ID, nil
 }

@@ -36,9 +36,8 @@ func main() {
 
 	httpClient := http.Client{}
 	clock := clockwork.NewRealClock()
-	apiHost, _ := url.Parse("https://api.uk.alloyapp.io")
-	startUrl, _ := url.Parse("https://hackney-waste-pages.azurewebsites.net")
-	binsClient := client.BinsClient{httpClient, clock, apiHost, startUrl, cache}
+	apiHost, _ := url.Parse("https://waste-api-hackney-live.ieg4.net/f806d91c-e133-43a6-ba9a-c0ae4f4cccf6")
+	binsClient := client.BinsClient{httpClient, clock, apiHost, cache}
 
 	collectionHandler := handler.CollectionHandler{binsClient, cache}
 	addressHandler := handler.AddressHandler{binsClient, cache}

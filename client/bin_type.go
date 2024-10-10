@@ -64,6 +64,9 @@ func extractType(type_id string) RefuseType {
 	if type_id == "5f96b7dde6d6ef00671d1a04" {
 		return Garden // Garden Waste Key
 	}
+	if type_id == "659c303fa80cc2bb2ce82627" {
+		return Garden // GW_Wheeled Bin 140l
+	}
 	if type_id == "5f89be840de3b800682a1ce6" {
 		return Rubbish // Refuse Sack
 	}
@@ -82,8 +85,8 @@ func extractType(type_id string) RefuseType {
 	return UndefinedRefuseType
 }
 
-func (c BinsClient) GetBinType(binId, token string) (BinType, error) {
-	target := c.ApiHost.JoinPath(itemUrl, binId).String()
+func (c BinsClient) GetBinType(binId string) (BinType, error) {
+	target := c.ApiHost.JoinPath(binTypeUrl, binId).String()
 
 	if c.Cache != nil {
 		if res, found := c.Cache.Get(target); found {
@@ -95,8 +98,8 @@ func (c BinsClient) GetBinType(binId, token string) (BinType, error) {
 	if err != nil { // Don't think this can fail
 		return BinType{}, err
 	}
-	req.Header.Add("Authorization", fmt.Sprint("Bearer ", token))
 	req.Header.Add("User-Agent", userAgent)
+	req.Header.Add("Accept", "application/json")
 
 	resp, err := c.HttpClient.Do(req)
 	if err != nil {
@@ -112,35 +115,15 @@ func (c BinsClient) GetBinType(binId, token string) (BinType, error) {
 
 	// In this case, we want a single-stringed attribute value
 	type item struct {
-		Item struct {
-			Attributes []struct {
-				AttributeCode string          `json:"attributeCode"`
-				Value         json.RawMessage `json:"value"`
-			} `json:"attributes"`
-		} `json:"item"`
+		SubTitle string `json:"subTitle"`
+		BinType string `json:"binType"`
 	}
 
 	var data item
 	json.Unmarshal(body, &data)
 
-	var name string
-	var refuseType RefuseType
-
-	for _, attribute := range data.Item.Attributes {
-		if attribute.AttributeCode == "attributes_itemsSubtitle" {
-			json.Unmarshal(attribute.Value, &name)
-			continue
-		}
-		if attribute.AttributeCode == "attributes_wasteContainersType" {
-			var val []string
-			json.Unmarshal(attribute.Value, &val)
-			if len(val) == 0 {
-				continue
-			}
-			refuseType = extractType(val[0])
-			continue
-		}
-	}
+	name := tidy(data.SubTitle)
+	refuseType := extractType(data.BinType)
 
 	if name == "" && refuseType == UndefinedRefuseType {
 		return BinType{}, errors.New("Bin type not found")

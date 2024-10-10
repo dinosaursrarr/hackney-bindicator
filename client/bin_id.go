@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"strings"
 )
 
 // Want to be able to distinguish this error from other statuses.
@@ -16,8 +17,8 @@ type BinIds struct {
 	Ids  []string
 }
 
-func (c BinsClient) GetBinIds(propertyId, token string) (BinIds, error) {
-	target := c.ApiHost.JoinPath(itemUrl, propertyId).String()
+func (c BinsClient) GetBinIds(propertyId string) (BinIds, error) {
+	target := c.ApiHost.JoinPath(binIdUrl, propertyId).String()
 
 	if c.Cache != nil {
 		if res, found := c.Cache.Get(target); found {
@@ -29,8 +30,8 @@ func (c BinsClient) GetBinIds(propertyId, token string) (BinIds, error) {
 	if err != nil {
 		return BinIds{}, err
 	}
-	req.Header.Add("Authorization", fmt.Sprint("Bearer ", token))
 	req.Header.Add("User-Agent", userAgent)
+	req.Header.Add("Accept", "application/json")
 
 	resp, err := c.HttpClient.Do(req)
 	if err != nil {
@@ -49,26 +50,17 @@ func (c BinsClient) GetBinIds(propertyId, token string) (BinIds, error) {
 
 	// In this case, we want an attribute with a list of string values
 	type item struct {
-		Item struct {
-			Attributes []struct {
-				AttributeCode string          `json:"attributeCode"`
-				Value         json.RawMessage `json:"value"`
-			} `json:"attributes"`
-		} `json:"item"`
+		AddressSummary string `json:"addressSummary"`
+		Fields struct {
+			Containers string `json:"attributes_wasteContainersAssignableWasteContainers"`
+		} `json:"providerSpecificFields"`
 	}
 
 	var data item
 	json.Unmarshal(body, &data)
-	var res BinIds
-	for _, attribute := range data.Item.Attributes {
-		if attribute.AttributeCode == "attributes_itemsTitle" {
-			var val string
-			json.Unmarshal(attribute.Value, &val)
-			res.Name = tidy(val)
-		}
-		if attribute.AttributeCode == "attributes_wasteContainersAssignableWasteContainers" {
-			json.Unmarshal(attribute.Value, &res.Ids)
-		}
+	res := BinIds{
+		Name: tidy(data.AddressSummary),
+		Ids: strings.Split(data.Fields.Containers, ","),
 	}
 	if len(res.Ids) == 0 {
 		return BinIds{}, errors.New("Bin IDs not found for property")

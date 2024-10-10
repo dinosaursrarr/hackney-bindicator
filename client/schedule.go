@@ -8,8 +8,8 @@ import (
 	"time"
 )
 
-func (c BinsClient) GetWorkflowSchedule(workflowId, token string) ([]time.Time, error) {
-	target := c.ApiHost.JoinPath(workflowUrl, workflowId).String()
+func (c BinsClient) GetWorkflowSchedule(workflowId string) ([]time.Time, error) {
+	target := c.ApiHost.JoinPath(scheduleUrl, workflowId).String()
 
 	if c.Cache != nil {
 		if res, found := c.Cache.Get(target); found {
@@ -25,7 +25,6 @@ func (c BinsClient) GetWorkflowSchedule(workflowId, token string) ([]time.Time, 
 	if err != nil {
 		return []time.Time{}, err
 	}
-	req.Header.Add("Authorization", fmt.Sprint("Bearer ", token))
 	req.Header.Add("User-Agent", userAgent)
 
 	resp, err := c.HttpClient.Do(req)
@@ -41,13 +40,9 @@ func (c BinsClient) GetWorkflowSchedule(workflowId, token string) ([]time.Time, 
 	}
 
 	type workflow struct {
-		Workflow struct {
-			Workflow struct {
-				Trigger struct {
-					Dates []time.Time `json:"dates"`
-				} `json:"trigger"`
-			} `json:"workflow"`
-		} `json:"workflow"`
+		Trigger struct {
+			Dates []time.Time `json:"dates"`
+		} `json:"trigger"`
 	}
 
 	var data workflow
@@ -55,7 +50,7 @@ func (c BinsClient) GetWorkflowSchedule(workflowId, token string) ([]time.Time, 
 
 	var schedule []time.Time
 	now := c.Clock.Now()
-	for _, t := range data.Workflow.Workflow.Trigger.Dates {
+	for _, t := range data.Trigger.Dates {
 		if t.Before(now) {
 			continue
 		}

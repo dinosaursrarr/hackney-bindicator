@@ -31,13 +31,7 @@ func (h *AddressHandler) Handle(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	token, err := h.Client.GetAccessToken()
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	addresses, err := h.Client.GetAddresses(postcode, token)
+	addresses, err := h.Client.GetAddresses(postcode)
 	if err == client.NotHackneyErr {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
