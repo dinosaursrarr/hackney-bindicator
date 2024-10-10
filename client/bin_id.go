@@ -51,7 +51,7 @@ func (c BinsClient) GetBinIds(propertyId string) (BinIds, error) {
 	// In this case, we want an attribute with a list of string values
 	type item struct {
 		AddressSummary string `json:"addressSummary"`
-		Fields struct {
+		Fields         struct {
 			Containers string `json:"attributes_wasteContainersAssignableWasteContainers"`
 		} `json:"providerSpecificFields"`
 	}
@@ -62,10 +62,10 @@ func (c BinsClient) GetBinIds(propertyId string) (BinIds, error) {
 	if len(data.Fields.Containers) == 0 {
 		return BinIds{}, errors.New("Bin IDs not found for property")
 	}
-	
+
 	res := BinIds{
 		Name: tidy(data.AddressSummary),
-		Ids: strings.Split(data.Fields.Containers, ","),
+		Ids:  strings.Split(data.Fields.Containers, ","),
 	}
 	if c.Cache != nil {
 		c.Cache.Add(target, res)

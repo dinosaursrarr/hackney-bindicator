@@ -100,8 +100,8 @@ func (c BinsClient) GetAddresses(postcode string) ([]Address, error) {
 
 	type result struct {
 		AddressSummaries []struct {
-			Summary     string `json:"summary"`
-			SystemId	string `json:"systemId"`
+			Summary  string `json:"summary"`
+			SystemId string `json:"systemId"`
 		} `json:"addressSummaries"`
 	}
 
@@ -116,7 +116,7 @@ func (c BinsClient) GetAddresses(postcode string) ([]Address, error) {
 			continue
 		}
 		address := Address{
-			Id: systemID,
+			Id:   systemID,
 			Name: location,
 		}
 		addresses = append(addresses, address)

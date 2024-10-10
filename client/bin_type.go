@@ -116,7 +116,7 @@ func (c BinsClient) GetBinType(binId string) (BinType, error) {
 	// In this case, we want a single-stringed attribute value
 	type item struct {
 		SubTitle string `json:"subTitle"`
-		BinType string `json:"binType"`
+		BinType  string `json:"binType"`
 	}
 
 	var data item

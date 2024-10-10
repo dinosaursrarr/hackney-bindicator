@@ -42,7 +42,7 @@ func (c BinsClient) GetBinWorkflowId(binId string) (string, error) {
 
 	var data result
 	json.Unmarshal(respBody, &data)
-	
+
 	if data.ID == "" {
 		return "", errors.New("Workflow ID not found")
 	}
