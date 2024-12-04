@@ -112,14 +112,32 @@ func TestWorkflowIdNotFound(t *testing.T) {
 	res, err := client.GetBinWorkflowId(BinId)
 
 	assert.Empty(t, res)
-	assert.Contains(t, err.Error(), "Workflow ID not found")
+	assert.Contains(t, err.Error(), "Workflow IDs not found")
 }
 
-func TestEmptyWorkflowIdFound(t *testing.T) {
+func TestEmptyWorkflowIdList(t *testing.T) {
 	apiSvr := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, `
 			{
-				"scheduleCodeWorkflowID": ""
+				"scheduleCodeWorkflowIDs": []
+			}
+		`)
+	}))
+	defer apiSvr.Close()
+	apiUrl, _ := url.Parse(apiSvr.URL)
+	client := client.BinsClient{http.Client{}, nil, apiUrl, nil}
+
+	res, err := client.GetBinWorkflowId(BinId)
+
+	assert.Empty(t, res)
+	assert.Contains(t, err.Error(), "Workflow IDs not found")
+}
+
+func TestEmptyFirstWorkflowId(t *testing.T) {
+	apiSvr := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprintf(w, `
+			{
+				"scheduleCodeWorkflowIDs": [""]
 			}
 		`)
 	}))
@@ -137,7 +155,7 @@ func TestSuccessWorkflowId(t *testing.T) {
 	apiSvr := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, `
 			{
-				"scheduleCodeWorkflowID": "foo"
+				"scheduleCodeWorkflowIDs": ["foo"]
 			}
 		`)
 	}))
@@ -156,7 +174,7 @@ func TestFetchWorkflowIdTwiceWithoutCache(t *testing.T) {
 	apiSvr := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, `
 			{
-				"scheduleCodeWorkflowID": "foo"
+				"scheduleCodeWorkflowIDs": ["foo"]
 			}
 		`)
 		fetches += 1
@@ -176,7 +194,7 @@ func TestFetchWorkflowIdOnceWithCache(t *testing.T) {
 	apiSvr := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, `
 			{
-				"scheduleCodeWorkflowID": "foo"
+				"scheduleCodeWorkflowIDs": ["foo"]
 			}
 		`)
 		fetches += 1

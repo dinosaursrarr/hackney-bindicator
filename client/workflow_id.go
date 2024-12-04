@@ -37,18 +37,21 @@ func (c BinsClient) GetBinWorkflowId(binId string) (string, error) {
 	}
 
 	type result struct {
-		ID string `json:"scheduleCodeWorkflowID"`
+		IDs []string `json:"scheduleCodeWorkflowIDs"`
 	}
 
 	var data result
 	json.Unmarshal(respBody, &data)
 
-	if data.ID == "" {
+	if len(data.IDs) == 0 {
+		return "", errors.New("Workflow IDs not found")
+	}
+	if data.IDs[0] == "" {
 		return "", errors.New("Workflow ID not found")
 	}
 
 	if c.Cache != nil {
-		c.Cache.Add(target, data.ID)
+		c.Cache.Add(target, data.IDs[0])
 	}
-	return data.ID, nil
+	return data.IDs[0], nil
 }
