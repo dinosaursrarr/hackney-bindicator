@@ -37,11 +37,26 @@ func main() {
 	httpClient := http.Client{}
 	clock := clockwork.NewRealClock()
 	apiHost, _ := url.Parse("https://waste-api-hackney-live.ieg4.net/f806d91c-e133-43a6-ba9a-c0ae4f4cccf6")
-	binsClient := client.BinsClient{httpClient, clock, apiHost, cache}
+	binsClient := client.BinsClient{
+		HttpClient: httpClient,
+		Clock:      clock,
+		ApiHost:    apiHost,
+		Cache:      cache,
+	}
 
-	collectionHandler := handler.CollectionHandler{binsClient, cache}
-	addressHandler := handler.AddressHandler{binsClient, cache}
-	readmeHandler := handler.MarkdownHandler{readme, "Hackney Bindicator", "static/style.css"}
+	collectionHandler := handler.CollectionHandler{
+		Client: binsClient,
+		Cache:  cache,
+	}
+	addressHandler := handler.AddressHandler{
+		Client: binsClient,
+		Cache:  cache,
+	}
+	readmeHandler := handler.MarkdownHandler{
+		Markdown: readme,
+		Title:    "Hackney Bindicator",
+		CssPath:  "static/style.css",
+	}
 
 	r := mux.NewRouter()
 	r.HandleFunc("/property/{property_id}", collectionHandler.Handle)

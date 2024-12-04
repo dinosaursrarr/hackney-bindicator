@@ -49,13 +49,13 @@ const Bin2TypeJsonResponse = `
 const WorkflowId1 = "workflow1"
 const Bin1WorkflowIdJsonResponse = `
 	{
-		"scheduleCodeWorkflowID": "` + WorkflowId1 + `"
+		"scheduleCodeWorkflowIDs": ["` + WorkflowId1 + `"]
 	}
 `
 const WorkflowId2 = "workflow2"
 const Bin2WorkflowIdJsonResponse = `
 	{
-		"scheduleCodeWorkflowID": "` + WorkflowId2 + `"
+		"scheduleCodeWorkflowIDs": ["` + WorkflowId2 + `"]
 	}
 `
 const Workflow1ScheduleJsonResponse = `
