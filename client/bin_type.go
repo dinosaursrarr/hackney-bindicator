@@ -67,6 +67,9 @@ func extractType(type_id string) RefuseType {
 	if type_id == "659c303fa80cc2bb2ce82627" {
 		return Garden // GW_Wheeled Bin 140l
 	}
+	if type_id == "659c317a91676f249616068c" {
+		return Garden // GW_Bin140l + 2 Bags 90l
+	}
 	if type_id == "5f89be840de3b800682a1ce6" {
 		return Rubbish // Refuse Sack
 	}
@@ -112,6 +115,7 @@ func (c BinsClient) GetBinType(binId string) (BinType, error) {
 	if err != nil {
 		return BinType{}, err
 	}
+	fmt.Print("!!!" + string(body))
 
 	// In this case, we want a single-stringed attribute value
 	type item struct {
