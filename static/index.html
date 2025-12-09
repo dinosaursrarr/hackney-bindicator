@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hackney Bin Collections</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+            background: #f5f5f5;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 25px 20px;
+            background: #00664f;
+            border-radius: 8px;
+        }
+
+        .header h1 {
+            font-size: 2em;
+            color: #fff;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .header .subtitle {
+            font-size: 0.95em;
+            color: rgba(255,255,255,0.85);
+        }
+
+        .header .location {
+            font-size: 0.75em;
+            color: rgba(255,255,255,0.65);
+            margin-top: 8px;
+            letter-spacing: 0.5px;
+        }
+
+        .search-box {
+            background: #fff;
+            border-radius: 8px;
+            padding: 30px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        .input-label {
+            font-size: 0.95em;
+            margin-bottom: 8px;
+            display: block;
+            font-weight: 600;
+            color: #333;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 14px;
+            font-size: 1.2em;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            font-weight: 500;
+            outline: none;
+            text-transform: uppercase;
+        }
+
+        input[type="text"]:focus {
+            border-color: #00664f;
+        }
+
+        .search-btn {
+            width: 100%;
+            padding: 14px;
+            background: #00664f;
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 15px;
+            transition: background 0.2s;
+        }
+
+        .search-btn:hover {
+            background: #00805f;
+        }
+
+        .search-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .hint {
+            color: #666;
+            font-size: 0.85em;
+            margin-top: 10px;
+            text-align: center;
+        }
+
+        .property-list {
+            background: #fff;
+            border-radius: 8px;
+            padding: 30px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        .property-list h2 {
+            margin-bottom: 20px;
+            font-size: 1.4em;
+            font-weight: 600;
+        }
+
+        .property-item {
+            padding: 15px;
+            border: 2px solid #eee;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 500;
+        }
+
+        .property-item:hover {
+            border-color: #00664f;
+            background: #f0f8f6;
+        }
+
+        .schedule {
+            background: #fff;
+            border-radius: 8px;
+            padding: 30px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .schedule h2 {
+            margin-bottom: 8px;
+            font-size: 1.4em;
+            font-weight: 600;
+        }
+
+        .address {
+            color: #666;
+            font-size: 0.95em;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #eee;
+        }
+
+        .next-collection {
+            margin-bottom: 30px;
+        }
+
+        .next-label {
+            font-size: 0.9em;
+            color: #666;
+            margin-bottom: 8px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .date-header {
+            background: #00664f;
+            color: #fff;
+            padding: 12px 16px;
+            border-radius: 6px 6px 0 0;
+            font-size: 1.1em;
+            font-weight: 600;
+        }
+
+        .date-header.today {
+            background: #be3a34;
+        }
+
+        .date-header.tomorrow {
+            background: #d97706;
+        }
+
+        .bins-container {
+            display: flex;
+            gap: 12px;
+            padding: 16px;
+            background: #fafafa;
+            border: 2px solid #00664f;
+            border-top: none;
+            border-radius: 0 0 6px 6px;
+        }
+
+        .bins-container.today {
+            border-color: #be3a34;
+        }
+
+        .bins-container.tomorrow {
+            border-color: #d97706;
+        }
+
+        .bin-item {
+            flex: 1;
+            text-align: center;
+            padding: 16px 12px;
+            border-radius: 6px;
+            border: 2px solid;
+        }
+
+        .bin-item.food {
+            background: #e6f3ff;
+            border-color: #0085ca;
+        }
+
+        .bin-item.recycling {
+            background: #e6f9ec;
+            border-color: #00b341;
+        }
+
+        .bin-item.garden {
+            background: #fffbeb;
+            border-color: #f8e08e;
+        }
+
+        .bin-item.rubbish {
+            background: #f5f5f5;
+            border-color: #bfc1c3;
+        }
+
+        .bin-item.unknown {
+            background: #fef3c7;
+            border-color: #f59e0b;
+        }
+
+        .bin-icon {
+            font-size: 2.5em;
+            margin-bottom: 8px;
+        }
+
+        .bin-type {
+            font-weight: 600;
+            font-size: 1em;
+            color: #000;
+        }
+
+        .other-bins {
+            margin-top: 30px;
+            padding-top: 25px;
+            border-top: 2px solid #eee;
+        }
+
+        .other-bins h3 {
+            font-size: 1em;
+            color: #666;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+
+        .other-bin-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .other-bin-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 16px;
+            background: #fafafa;
+            border-radius: 6px;
+            border: 1px solid #e5e5e5;
+        }
+
+        .other-bin-icon {
+            font-size: 1.8em;
+            margin-right: 12px;
+        }
+
+        .other-bin-info {
+            flex: 1;
+        }
+
+        .other-bin-type {
+            font-weight: 600;
+            font-size: 0.95em;
+            color: #000;
+        }
+
+        .other-bin-date {
+            font-size: 0.85em;
+            color: #666;
+            margin-top: 2px;
+        }
+
+        .error {
+            background: #fee;
+            color: #c00;
+            padding: 20px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            font-weight: 500;
+            border: 2px solid #c00;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+        }
+
+        .spinner {
+            font-size: 3em;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            margin-top: 15px;
+            font-size: 1em;
+            color: #666;
+        }
+
+        .back-btn {
+            display: inline-block;
+            margin-bottom: 20px;
+            padding: 10px 18px;
+            background: #fff;
+            color: #333;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            cursor: pointer;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.9em;
+            transition: all 0.2s;
+        }
+
+        .back-btn:hover {
+            background: #f5f5f5;
+            border-color: #00664f;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            padding: 20px;
+            color: #888;
+            font-size: 0.85em;
+        }
+
+        @media (max-width: 600px) {
+            .bins-container {
+                flex-direction: column;
+            }
+
+            .bin-item {
+                padding: 20px 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🗑️ Hackney Bins</h1>
+            <div class="subtitle">Collection Schedule</div>
+            <div class="location">E1 • E2 • E5 • E8 • E9 • E10 • E15 • E20 • N1 • N4 • N5 • N16</div>
+        </div>
+
+        <div id="app"></div>
+
+        <div class="footer">
+            Made for Hackney residents • Not official council stuff
+        </div>
+    </div>
+
+    <script>
+        const app = document.getElementById('app');
+        
+        const binIcons = {
+            food: '🍎',
+            recycling: '♻️',
+            garden: '🌱',
+            rubbish: '🗑️',
+            unknown: '📦'
+        };
+
+        const binTypes = {
+            food: 'Food',
+            recycling: 'Recycling',
+            garden: 'Garden',
+            rubbish: 'Rubbish',
+            unknown: 'Unknown'
+        };
+
+        function getDaysUntil(dateString) {
+            const date = new Date(dateString);
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const collectionDate = new Date(date);
+            collectionDate.setHours(0, 0, 0, 0);
+            
+            const diffTime = collectionDate - today;
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            
+            return diffDays;
+        }
+
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            const days = getDaysUntil(dateString);
+
+            const options = { weekday: 'long', day: 'numeric', month: 'long' };
+            const formatted = date.toLocaleDateString('en-GB', options);
+
+            if (days === 0) {
+                return { text: `Today – ${formatted}`, urgency: 'today' };
+            } else if (days === 1) {
+                return { text: `Tomorrow – ${formatted}`, urgency: 'tomorrow' };
+            } else {
+                return { text: formatted, urgency: 'normal' };
+            }
+        }
+
+        function renderSearchBox() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const propertyId = urlParams.get('property');
+            
+            if (propertyId) {
+                loadProperty(propertyId);
+                return;
+            }
+
+            app.innerHTML = `
+                <div class="search-box">
+                    <label class="input-label">Enter your postcode</label>
+                    <input 
+                        type="text" 
+                        id="searchInput" 
+                        placeholder="E.g. E8 1DY"
+                        autofocus
+                    >
+                    <button class="search-btn" id="searchBtn">Search</button>
+                    <div class="hint">Hackney postcodes only</div>
+                </div>
+            `;
+
+            document.getElementById('searchBtn').addEventListener('click', handleSearch);
+            document.getElementById('searchInput').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') handleSearch();
+            });
+        }
+
+        async function handleSearch() {
+            const input = document.getElementById('searchInput').value.trim().toUpperCase();
+            
+            if (!input) return;
+
+            const postcodeRegex = /^[A-Z]{1,2}\d{1,2}\s?\d[A-Z]{2}$/;
+            
+            if (postcodeRegex.test(input.replace(/\s/g, ''))) {
+                await searchPostcode(input);
+            } else {
+                await loadProperty(input);
+            }
+        }
+
+        async function searchPostcode(postcode) {
+            showLoading();
+            
+            try {
+                const response = await fetch(`/addresses/${postcode}`);
+                
+                if (!response.ok) {
+                    throw new Error('Postcode not found or not in Hackney');
+                }
+                
+                const properties = await response.json();
+                
+                if (!properties || properties.length === 0) {
+                    showError('No properties found for this postcode');
+                    return;
+                }
+                
+                if (properties.length === 1) {
+                    navigateToProperty(properties[0].Id);
+                } else {
+                    renderPropertyList(properties);
+                }
+            } catch (error) {
+                showError(error.message);
+            }
+        }
+
+        async function loadProperty(propertyId) {
+            showLoading();
+            
+            try {
+                const response = await fetch(`/property/${propertyId}`);
+                
+                if (!response.ok) {
+                    throw new Error('Property not found');
+                }
+                
+                const property = await response.json();
+                renderSchedule(property);
+            } catch (error) {
+                showError(error.message);
+            }
+        }
+
+        function renderPropertyList(properties) {
+            app.innerHTML = `
+                <div class="property-list">
+                    <h2>Select your property</h2>
+                    <div id="propertyItems">
+                        ${properties.map(prop => `
+                            <div class="property-item" data-id="${prop.Id}">
+                                ${prop.Name}
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+                <button class="back-btn" id="backFromList">← Back</button>
+            `;
+
+            document.querySelectorAll('.property-item').forEach(item => {
+                item.addEventListener('click', () => {
+                    navigateToProperty(item.dataset.id);
+                });
+            });
+
+            document.getElementById('backFromList').addEventListener('click', () => {
+                const url = new URL(window.location);
+                url.search = '';
+                window.history.pushState({}, '', url);
+                renderSearchBox();
+            });
+        }
+
+        function renderSchedule(property) {
+            // Group all bins by type with their next collection date
+            const binsByType = {};
+            property.Bins.forEach(bin => {
+                const type = bin.Type;
+                if (!binsByType[type] || new Date(bin.NextCollection) < new Date(binsByType[type].date)) {
+                    binsByType[type] = {
+                        type: type,
+                        date: bin.NextCollection
+                    };
+                }
+            });
+
+            // Get all unique bins sorted by next collection
+            const allBins = Object.values(binsByType).sort((a, b) => 
+                new Date(a.date) - new Date(b.date)
+            );
+
+            if (allBins.length === 0) {
+                showError('No collections found');
+                return;
+            }
+
+            // Next collection is the soonest date
+            const nextDate = allBins[0].date;
+            const nextBins = allBins.filter(b => b.date === nextDate);
+            const otherBins = allBins.filter(b => b.date !== nextDate);
+
+            const nextDateInfo = formatDate(nextDate);
+
+            app.innerHTML = `
+                <div class="schedule">
+                    <button class="back-btn" id="backFromSchedule">← New Search</button>
+                    <h2>Your Collections</h2>
+                    <div class="address">${property.Name}</div>
+                    
+                    <div class="next-collection">
+                        <div class="next-label">Next Collection</div>
+                        <div class="date-header ${nextDateInfo.urgency}">
+                            ${nextDateInfo.text}
+                        </div>
+                        <div class="bins-container ${nextDateInfo.urgency}">
+                            ${nextBins.map(bin => `
+                                <div class="bin-item ${bin.type}">
+                                    <div class="bin-icon">${binIcons[bin.type]}</div>
+                                    <div class="bin-type">${binTypes[bin.type]}</div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+
+                    ${otherBins.length > 0 ? `
+                        <div class="other-bins">
+                            <h3>Other bins</h3>
+                            <div class="other-bin-list">
+                                ${otherBins.map(bin => {
+                                    const dateInfo = formatDate(bin.date);
+                                    return `
+                                        <div class="other-bin-item">
+                                            <div class="other-bin-icon">${binIcons[bin.type]}</div>
+                                            <div class="other-bin-info">
+                                                <div class="other-bin-type">${binTypes[bin.type]}</div>
+                                                <div class="other-bin-date">${dateInfo.text}</div>
+                                            </div>
+                                        </div>
+                                    `;
+                                }).join('')}
+                            </div>
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+
+            document.getElementById('backFromSchedule').addEventListener('click', () => {
+                const url = new URL(window.location);
+                url.search = '';
+                window.history.pushState({}, '', url);
+                renderSearchBox();
+            });
+        }
+
+        function navigateToProperty(propertyId) {
+            const url = new URL(window.location);
+            url.searchParams.set('property', propertyId);
+            window.history.pushState({}, '', url);
+            loadProperty(propertyId);
+        }
+
+        function showLoading() {
+            app.innerHTML = `
+                <div class="search-box loading">
+                    <div class="spinner">♻️</div>
+                    <div class="loading-text">Loading...</div>
+                </div>
+            `;
+        }
+
+        function showError(message) {
+            app.innerHTML = `
+                <div class="search-box">
+                    <div class="error">${message}</div>
+                    <button class="search-btn" id="retryBtn">Try Again</button>
+                </div>
+            `;
+
+            document.getElementById('retryBtn').addEventListener('click', () => {
+                renderSearchBox();
+            });
+        }
+
+        window.addEventListener('popstate', () => {
+            renderSearchBox();
+        });
+
+        renderSearchBox();
+    </script>
+</body>
+</html>
