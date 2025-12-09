@@ -5,7 +5,9 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
+	"strings"
 )
 
 type RefuseType int
@@ -37,7 +39,7 @@ type BinType struct {
 	Type RefuseType
 }
 
-func extractType(type_id string) RefuseType {
+func extractType(name, type_id string) RefuseType {
 	// This is business logic that I've added. Probably the most
 	// fragile part of this whole app.
 	if type_id == "5f96b455e36673006420c529" {
@@ -85,6 +87,17 @@ func extractType(type_id string) RefuseType {
 	if type_id == "619f87d15c9f9c016ce81494" {
 		return Rubbish // Refuse Eurobin (1100 litre) Trade Waste Only
 	}
+
+	if strings.Contains(name, "ES_Refuse") {
+		return Rubbish
+	}
+	if strings.Contains(name, "ES_Recycling") {
+		return Recycling
+	}
+	if strings.Contains(name, "ES_Food") {
+		return Food
+	}
+
 	return UndefinedRefuseType
 }
 
@@ -126,7 +139,11 @@ func (c BinsClient) GetBinType(binId string) (BinType, error) {
 	json.Unmarshal(body, &data)
 
 	name := tidy(data.SubTitle)
-	refuseType := extractType(data.BinType)
+	refuseType := extractType(name, data.BinType)
+
+	if refuseType == UndefinedRefuseType {
+		log.Printf("unknown bin type: %#v", data)
+	}
 
 	if name == "" && refuseType == UndefinedRefuseType {
 		return BinType{}, errors.New("Bin type not found")
