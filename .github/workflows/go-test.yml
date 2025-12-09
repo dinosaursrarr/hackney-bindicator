@@ -1,0 +1,30 @@
+name: Go Test
+
+on:
+  push:
+    branches:
+      - main  # Triggers the workflow when code is pushed to the 'main' branch
+  pull_request:
+    branches:
+      - main   # Triggers the workflow for any pull request against any branch
+
+jobs:
+  test:
+    name: Run Go Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+          cache-dependency-path: go.sum
+
+      - name: Download Go Modules
+        run: go mod download
+
+      - name: Run Go Tests
+        run: go test -v ./...
