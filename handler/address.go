@@ -2,7 +2,7 @@ package handler
 
 import (
 	"encoding/json"
-	"fmt"
+	"io"
 	"net/http"
 
 	"github.com/dinosaursrarr/hackney-bindicator/client"
@@ -26,7 +26,7 @@ func (h *AddressHandler) Handle(w http.ResponseWriter, r *http.Request) {
 	if h.Cache != nil {
 		if res, found := h.Cache.Get(r.URL.String()); found {
 			result := res.(string)
-			fmt.Fprintf(w, result)
+			io.WriteString(w, result)
 			return
 		}
 	}
@@ -55,5 +55,5 @@ func (h *AddressHandler) Handle(w http.ResponseWriter, r *http.Request) {
 		h.Cache.Add(r.URL.String(), res)
 	}
 	w.Header().Set("Content-Type", "application/json")
-	fmt.Fprintf(w, res)
+	io.WriteString(w, res)
 }
