@@ -62,7 +62,10 @@ func main() {
 	r.HandleFunc("/property/{property_id}", collectionHandler.Handle)
 	r.HandleFunc("/addresses/{postcode}", addressHandler.Handle)
 	r.PathPrefix("/static/").Handler(http.FileServer(http.FS(static)))
-	r.HandleFunc("/", readmeHandler.Handle)
+	r.HandleFunc("/readme", readmeHandler.Handle)
+	r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "static/index.html")
+	})
 
 	log.Println("listening on", port)
 	log.Fatal(http.ListenAndServe(":"+port, r))

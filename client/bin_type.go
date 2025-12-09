@@ -115,7 +115,6 @@ func (c BinsClient) GetBinType(binId string) (BinType, error) {
 	if err != nil {
 		return BinType{}, err
 	}
-	fmt.Print("!!!" + string(body))
 
 	// In this case, we want a single-stringed attribute value
 	type item struct {
