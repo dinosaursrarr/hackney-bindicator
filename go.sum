@@ -2,8 +2,8 @@ facette.io/natsort v0.0.0-20181210072756-2cd4dd1e2dcb h1:1pSweJFeR3Pqx7uoelppkze
 facette.io/natsort v0.0.0-20181210072756-2cd4dd1e2dcb/go.mod h1:npRYmtaITVom7rcSo+pRURltHSG2r4TQM1cdqJ2dUB0=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
-github.com/gomarkdown/markdown v0.0.0-20231222211730-1d6d20845b47 h1:k4Tw0nt6lwro3Uin8eqoET7MDA4JnT8YgbCjc/g5E3k=
-github.com/gomarkdown/markdown v0.0.0-20231222211730-1d6d20845b47/go.mod h1:JDGcbDT52eL4fju3sZ4TeHGsQwhG9nbDV21aMyhwPoA=
+github.com/gomarkdown/markdown v0.0.0-20250810172220-2e2c11897d1a h1:l7A0loSszR5zHd/qK53ZIHMO8b3bBSmENnQ6eKnUT0A=
+github.com/gomarkdown/markdown v0.0.0-20250810172220-2e2c11897d1a/go.mod h1:JDGcbDT52eL4fju3sZ4TeHGsQwhG9nbDV21aMyhwPoA=
 github.com/gorilla/mux v1.8.1 h1:TuBL49tXwgrFYWhqrNgrUNEY92u81SPhu7sTdzQEiWY=
 github.com/gorilla/mux v1.8.1/go.mod h1:AKf9I4AEqPTmMytcMc0KkNouC66V3BtZ4qD5fmWSiMQ=
 github.com/hashicorp/golang-lru/v2 v2.0.7 h1:a+bsQ5rvGLjzHuww6tVxozPZFVghXaHOwFs4luLUK2k=
