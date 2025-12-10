@@ -64,7 +64,7 @@ func main() {
 	r.PathPrefix("/static/").Handler(http.FileServer(http.FS(static)))
 	r.HandleFunc("/readme", readmeHandler.Handle)
 	r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, "static/index.html")
+    	http.ServeFileFS(w, r, static, "static/index.html")
 	})
 
 	log.Println("listening on", port)
