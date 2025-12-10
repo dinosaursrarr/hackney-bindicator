@@ -11,8 +11,12 @@ FROM debian:bookworm
 
 WORKDIR /
 
+RUN apt-get update && \
+    apt-get install -y ca-certificates && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
 COPY --from=builder /usr/src/app/hackney-bindicator /app/
-COPY --from=builder /usr/src/app/README.md /app/
-COPY --from=builder /usr/src/app/static /app/static/
+EXPOSE 8080
 
 CMD [ "/app/hackney-bindicator" ]
