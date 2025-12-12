@@ -18,9 +18,6 @@ import (
 	"github.com/jonboulle/clockwork"
 )
 
-//go:embed README.md
-var readme []byte
-
 //go:embed static/*
 var static embed.FS
 
@@ -51,6 +48,10 @@ func main() {
 	addressHandler := handler.AddressHandler{
 		Client: binsClient,
 		Cache:  cache,
+	}
+	readme, err := static.ReadFile("static/README.md")
+	if err != nil {
+		log.Fatal("Could not load readme")
 	}
 	readmeHandler := handler.MarkdownHandler{
 		Markdown: readme,
