@@ -3,7 +3,6 @@
 # Please see the documentation for all configuration options:
 # https://docs.github.com/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
 version: 2
-assignees: "dinosaursrarr"
 updates:
   - package-ecosystem: "gomod" # See documentation for possible values
     directory: "/" # Location of package manifests
@@ -12,6 +11,7 @@ updates:
     groups:
       go:
         patterns: ["*"]
+    assignees: "dinosaursrarr"
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
@@ -19,4 +19,4 @@ updates:
     groups:
       github-actions:
         patterns: ["*"]
-
+    assignees: "dinosaursrarr"
