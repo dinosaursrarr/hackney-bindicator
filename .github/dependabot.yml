@@ -11,7 +11,7 @@ updates:
     groups:
       go:
         patterns: ["*"]
-    assignees: "dinosaursrarr"
+    assignees: ["dinosaursrarr"]
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
@@ -19,4 +19,4 @@ updates:
     groups:
       github-actions:
         patterns: ["*"]
-    assignees: "dinosaursrarr"
+    assignees: ["dinosaursrarr"]
