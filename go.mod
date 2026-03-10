@@ -1,6 +1,6 @@
 module github.com/dinosaursrarr/hackney-bindicator
 
-go 1.24.0
+go 1.25.0
 
 require (
 	facette.io/natsort v0.0.0-20181210072756-2cd4dd1e2dcb
@@ -9,7 +9,7 @@ require (
 	github.com/hashicorp/golang-lru/v2 v2.0.7
 	github.com/jonboulle/clockwork v0.5.0
 	github.com/stretchr/testify v1.11.1
-	golang.org/x/sync v0.19.0
+	golang.org/x/sync v0.20.0
 )
 
 require (
